@@ -1,0 +1,34 @@
+{
+  "name": "C++ DevContainer (Prebuilt)",
+  "image": "cpp-dev:latest",  // <-- Replace with your real image tag (e.g. user/cpp-dev:1.0)
+
+  "initializeCommand": "./scripts/build_image.sh",
+
+  "updateRemoteUserUID": false,
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.shell.linux": "bash",
+        "editor.formatOnSave": true,
+        "C_Cpp.clang_format_style": "file",
+        "C_Cpp.default.cppStandard": "c++20"
+      },
+      "extensions": [
+        "ms-vscode.cpptools",
+        "ms-vscode.cmake-tools"
+      ]
+    }
+  },
+
+  "postStartCommand": "bash",
+
+  "runArgs": [
+    "--rm",
+    "--hostname", "cpp-devcontainer",
+    "--name", "cpp-devcontainer",
+    "--env", "DISPLAY=${localEnv:DISPLAY}",
+    "--volume", "/tmp/.X11-unix:/tmp/.X11-unix",
+    "--gpus", "all"
+  ]
+}

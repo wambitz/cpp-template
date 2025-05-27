@@ -1,0 +1,43 @@
+BasedOnStyle: Google
+Standard: c++17
+
+# Indentation
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Braces and layout
+BreakBeforeBraces: Allman
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+
+# Line length
+ColumnLimit: 100
+PenaltyBreakComment: 300
+PenaltyReturnTypeOnItsOwnLine: 100
+
+# Namespaces
+# IndentNamespace: None
+
+# Includes
+SortIncludes: true
+IncludeBlocks: Preserve
+IncludeCategories:
+  - Regex: '^<.*\.h>'
+    Priority: 1
+  - Regex: '^"'
+    Priority: 2
+  - Regex: '.*'
+    Priority: 3
+
+# Pointers / references
+PointerAlignment: Left
+SpaceBeforeParens: ControlStatements
+SpaceAfterCStyleCast: true
+
+# Comments
+ReflowComments: true
+
+# Explicitly disable GNU extensions
+DerivePointerAlignment: false

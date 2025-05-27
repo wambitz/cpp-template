@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: configure",
+            "type": "shell",
+            "command": "cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug",
+            "group": "build"
+        },
+        {
+            "label": "CMake: build",
+            "type": "shell",
+            "command": "cmake --build build --config Debug",
+            "group": "build",
+            "dependsOn": "CMake: configure"
+        },
+        {
+            "label": "CMake: clean",
+            "type": "shell",
+            "command": "rm -rf build/",
+            "group": "build",
+        }
+    ]
+}

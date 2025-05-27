@@ -1,0 +1,1 @@
+add_library(my_plugin SHARED plugin_impl.cpp)

@@ -1,0 +1,30 @@
+# Project Info
+PROJECT_NAME           = "C++ Project Template"
+OUTPUT_DIRECTORY       = docs/html
+INPUT                  = ../src ../tests
+FILE_PATTERNS          = *.cpp *.hpp *.h
+RECURSIVE              = YES
+
+# Output control
+GENERATE_LATEX         = NO
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = YES
+EXTRACT_STATIC         = YES
+EXTRACT_ANON_NSPACES   = YES
+
+# Warnings
+WARN_IF_UNDOCUMENTED   = YES
+WARN_NO_PARAMDOC       = YES
+
+# Preprocessor behavior
+ENABLE_PREPROCESSING   = YES
+MACRO_EXPANSION        = YES
+
+# Source browser (optional)
+SOURCE_BROWSER         = YES
+INLINE_SOURCES         = YES
+
+# Markdown support
+USE_MDFILE_AS_MAINPAGE = ../README.md
