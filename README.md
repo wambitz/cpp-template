@@ -147,10 +147,9 @@ steps:
 Enable tests by fetching GoogleTest:
 
 ```bash
-./scripts/fetch_googletest.sh
 cmake -S . -B build -DENABLE_TESTS=ON
 cmake --build build
 ctest --test-dir build
 ```
 
-Disable with `-DENABLE_TESTS=OFF`.
+Disable with `-DENABLE_TESTS=OFF`. This is the default
