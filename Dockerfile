@@ -18,6 +18,7 @@ ARG PROJECT_NAME="cpp-project-template"
 # Install common C++ dev tools and utilities
 # -----------------------------------------------------------------------------
 RUN apt-get update && apt-get install -y \
+    sudo \
     build-essential \
     cmake \
     clang-format \
