@@ -1,16 +1,43 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug main_exec",
-            "type": "cppdbg",
-            "request": "launch",
-            "program": "${workspaceFolder}/build/src/main/main_exec",
-            "args": [],
-            "stopAtEntry": true,
-            "cwd": "${workspaceFolder}/build",
-            "MIMode": "gdb",
-            "preLaunchTask": "CMake: build"
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug main_exec",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/src/main/main_exec",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}/build/src/main",
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "externalConsole": false
+    },
+    {
+      "name": "Debug unit_tests",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/tests/unit_tests",
+      "args": [],
+      "stopAtEntry": true,
+      "cwd": "${workspaceFolder}/build/tests",
+      "MIMode": "gdb",
+      "miDebuggerPath": "/usr/bin/gdb",
+      "externalConsole": false
+    },
+    { // NOTE: This needs gdbserver installed and running
+      // See: docs/remote-debugging.md and scripts/launch_gdbserver.sh
+      "name": "Attach to gdbserver in container",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/build/src/main/main_exec",
+      "miDebuggerServerAddress": "localhost:2345",
+      "MIMode": "gdb",
+      "stopAtEntry": true,
+      "sourceFileMap": {
+          "/workspaces/cpp-project-template": "${workspaceFolder}"
+      },
+      "cwd": "${workspaceFolder}"
+    }
+  ]
 }

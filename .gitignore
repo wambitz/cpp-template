@@ -39,3 +39,6 @@ html/
 
 # Testing
 Testing/
+
+# Python venv
+.venv
