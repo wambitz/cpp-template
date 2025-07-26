@@ -1,5 +1,5 @@
 {
-  "name": "C++ DevContainer (Prebuilt)",
+  "name": "C++ DevContainer",
   "image": "cpp-dev:latest",
 
   "initializeCommand": "./scripts/build_image.sh",
