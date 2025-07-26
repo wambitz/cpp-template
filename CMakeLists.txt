@@ -10,7 +10,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)                # helps clang-tools; optional
 
-# Set RPATH settings for installed binaries
+# Set RPATH for portable library discovery
+# $ORIGIN = directory containing the executable, ../lib = library directory
+# See docs/rpath-guide.md for detailed explanation
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)  # Use different RPATH for build vs install
@@ -107,3 +109,24 @@ install(TARGETS example_shared example_plugin_impl
 # install(DIRECTORY src/example_plugin_impl/
 #     DESTINATION include/example_plugin_impl
 #     FILES_MATCHING PATTERN "*.hpp")
+
+# -----------------------------------------------------------------------------
+# 3. CPack configuration for packaging
+# -----------------------------------------------------------------------------
+set(CPACK_PACKAGE_NAME "cpp-project-template")
+set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Modern C++ Project Template")
+set(CPACK_PACKAGE_VENDOR "Your Name")
+set(CPACK_PACKAGE_CONTACT "your.email@example.com")
+
+# Package types to generate
+set(CPACK_GENERATOR "TGZ;ZIP")
+
+# For Linux distributions - DEB packaging disabled for now
+# if(UNIX AND NOT APPLE)
+#     list(APPEND CPACK_GENERATOR "DEB")
+#     set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Your Name <your.email@example.com>")
+#     set(CPACK_DEBIAN_PACKAGE_SECTION "devel")
+# endif()
+
+include(CPack)

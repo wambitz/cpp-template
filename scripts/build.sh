@@ -10,7 +10,7 @@ INSTALL_DIR="install"
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Run CMake with Release build type by default
+# Run CMake with Debug build type by default (for development)
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="../$INSTALL_DIR" ..
 
 # Build all targets with all cores

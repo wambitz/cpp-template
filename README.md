@@ -33,15 +33,18 @@ ctest --test-dir build --output-on-failure   # if tests enabled
 .
 ├── CMakeLists.txt           root build script
 ├── src/                     production code
-│   ├── libstatic/           static-library example
-│   ├── libshared/           shared-library example
-│   ├── plugin_loader/       runtime loader
-│   ├── plugin_impl/         sample plugin
+│   ├── example_public_private/ CMake visibility examples
+│   ├── example_interface/   interface library example
+│   ├── example_usage/       library usage patterns
+│   ├── example_static/      static library example
+│   ├── example_shared/      shared library example
+│   ├── example_plugin_loader/ runtime plugin loader
+│   ├── example_plugin_impl/ sample plugin
 │   └── main/                console application
 ├── tests/                   unit tests (GoogleTest)
 ├── external/                third-party code (empty by default)
 ├── scripts/                 helper scripts
-├── docs/                    Doxygen config and output
+├── docs/                    Doxygen config and RPATH guide
 └── .devcontainer/           VS Code container files
 ```
 
@@ -52,15 +55,41 @@ ctest --test-dir build --output-on-failure   # if tests enabled
 ### CMake
 
 ```bash
+# Development build (Debug, with debug symbols)
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+
+# Release build (optimized, for packaging)
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 ```
 
-Key flags
+**Key flags**:
 
 | Flag                     | Effect                           |
 | ------------------------ | -------------------------------- |
-| `-DENABLE_TESTS=OFF`     | Skip GoogleTest and test targets |
+| `-DENABLE_UNIT_TESTS=OFF` | Skip GoogleTest and test targets |
+| `-DENABLE_COVERAGE=ON`   | Enable code coverage with gcov   |
 | `-DBUILD_SHARED_LIBS=ON` | Build libraries as shared        |
+
+### Library Dependencies and RPATH
+
+This project uses **RPATH** (Runtime Path) for portable library discovery:
+
+```
+your-package/
+├── bin/
+│   └── main_exec                      ← RPATH: $ORIGIN/../lib
+└── lib/
+    ├── libexample_shared.so           ← Found automatically
+    └── libexample_plugin_impl.so      ← Found by dlopen()
+```
+
+**Key Benefits:**
+- **Self-contained packages** - work anywhere without installation
+- **No environment setup** - no `LD_LIBRARY_PATH` needed
+- **Plugin discovery** - `dlopen()` finds plugins via RPATH
+- **Clean code** - no hardcoded paths
+
+**For detailed RPATH explanation, examples, and troubleshooting, see [docs/rpath-guide.md](docs/rpath-guide.md)**
 
 ### Bazel
 
@@ -75,13 +104,18 @@ bazel build //libmath:math
 
 | Script                | Purpose                               |
 | --------------------- | ------------------------------------- |
-| `build.sh`            | Configure and compile (CMake)         |
+| `build.sh`            | Configure and compile (Debug mode)   |
+| `package.sh`          | Build and create distributable packages (Release mode) |
 | `run.sh`              | Launch Docker dev container           |
 | `build_image.sh`      | Build the `cpp-dev:latest` image      |
 | `format.sh`           | Run clang-format on sources           |
 | `lint.sh`             | Run clang-tidy using compile commands |
 | `docs.sh`             | Generate HTML docs                    |
-| `fetch_googletest.sh` | Clone GoogleTest into `external/`     |
+
+### Build vs Package
+
+- **`./scripts/build.sh`**: Debug build for development (fast compilation, debug symbols)  
+- **`./scripts/package.sh`**: Release build + CPack packaging (optimized, distributable)
 
 ---
 
