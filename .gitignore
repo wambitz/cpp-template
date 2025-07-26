@@ -41,5 +41,8 @@ html/
 # Testing
 Testing/
 
+# Coverage
+build_coverage/
+
 # Python venv
 .venv

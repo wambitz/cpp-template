@@ -16,6 +16,23 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)  # Use different RPATH for build vs install
 
 # -----------------------------------------------------------------------------
+# Coverage option
+# -----------------------------------------------------------------------------
+option(ENABLE_COVERAGE "Enable code coverage" OFF)
+
+if(ENABLE_COVERAGE)
+    message(STATUS "Code coverage enabled")
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --coverage")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --coverage")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} --coverage")
+    else()
+        message(WARNING "Code coverage only supported with GCC")
+    endif()
+endif()
+
+# -----------------------------------------------------------------------------
 # 1. Primary code
 # -----------------------------------------------------------------------------
 
