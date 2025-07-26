@@ -100,10 +100,19 @@ On each commit clang-format rewrites staged files and clang-tidy analyses them.
 
 ## Documentation
 
+Generate documentation locally:
 ```bash
 ./scripts/docs.sh
 xdg-open docs/html/index.html
 ```
+
+**Live Documentation**: Documentation is automatically built and deployed to GitHub Pages on every push to `main`. View the latest docs at: 
+- **[Live Documentation](https://yourusername.github.io/cpp-project-template/)** (replace with your actual GitHub Pages URL)
+
+The documentation pipeline:
+- Builds Doxygen docs on every PR and push to `main`
+- Automatically deploys to GitHub Pages when merged to `main`
+- Includes code documentation, build instructions, and API reference
 
 ---
 

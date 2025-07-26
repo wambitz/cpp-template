@@ -1,0 +1,13 @@
+1. DONE: Create a more complex source code approach.
+2. CPack
+3. DONE: CMake install
+4. CMake Release mode
+5. Profiling with VTune
+6. Multithreading with VTune
+7. DONE: Use unit-test examples instead of using dummy tests
+8. Convert attach with dbg server to a script
+9. Implement GitHub CI
+
+---
+
+DONE: Add gdb intructions and add it to docker image
