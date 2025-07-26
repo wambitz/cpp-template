@@ -1,0 +1,2 @@
+add_library(example_static STATIC example_static.cpp)
+target_include_directories(example_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

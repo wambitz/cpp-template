@@ -1,0 +1,3 @@
+add_library(example_plugin_loader STATIC plugin_loader.cpp)
+target_include_directories(example_plugin_loader PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(example_plugin_loader dl)

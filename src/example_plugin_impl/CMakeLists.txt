@@ -1,0 +1,2 @@
+add_library(example_plugin_impl SHARED plugin_impl.cpp)
+target_include_directories(example_plugin_impl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
