@@ -1,0 +1,2 @@
+add_library(example_shared SHARED example_shared.cpp)
+target_include_directories(example_shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
