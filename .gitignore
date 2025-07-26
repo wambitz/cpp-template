@@ -33,6 +33,7 @@
 
 # Build
 build/
+install/
 
 # Doxygen
 html/
