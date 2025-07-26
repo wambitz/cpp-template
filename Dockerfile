@@ -62,7 +62,7 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' /home/$USERNAME/
 # -----------------------------------------------------------------------------
 # Install pre-commit for code quality checks
 # -----------------------------------------------------------------------------
-RUN pip3 install --break-system-packages pre-commit
+RUN pip3 install --break-system-packages pre-commit cmake-format
 
 # ------------------------------------------------------------------------------
 # Set project workspace directory
