@@ -13,8 +13,14 @@ echo "Remapping '$CONTAINER_USER' to UID=$HOST_UID, GID=$HOST_GID"
 groupmod -g $HOST_GID $CONTAINER_USER 2>/dev/null || true
 
 # Remap user ID
-usermod -u $HOST_UID -g $HOST_GID $CONTAINER_USER 2>/dev/null || true
-
+CURRENT_UID=$(id -u $CONTAINER_USER)
+CURRENT_GID=$(id -g $CONTAINER_USER)
+if [ "$CURRENT_UID" != "$HOST_UID" ] || [ "$CURRENT_GID" != "$HOST_GID" ]; then
+    if ! usermod -u $HOST_UID -g $HOST_GID $CONTAINER_USER; then
+        echo "Error: Failed to change UID/GID for $CONTAINER_USER to $HOST_UID/$HOST_GID" >&2
+        exit 1
+    fi
+fi
 # Fix home directory ownership
 chown -R $HOST_UID:$HOST_GID /home/$CONTAINER_USER 2>/dev/null || true
 
