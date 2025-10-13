@@ -2,17 +2,14 @@
 # Dev Dockerfile for cpp-project-template
 # -----------------------------------------------------------------------------
 # This image is intended for local development and testing. Source code is mounted.
+# Uses runtime UID/GID remapping for portability across different hosts.
+# Leverages Ubuntu 24.04's built-in 'ubuntu' user for simplicity.
 # -----------------------------------------------------------------------------
 
 FROM ubuntu:24.04
 
 # Avoid interactive prompts during installation
 ENV DEBIAN_FRONTEND=noninteractive
-
-ARG USERNAME=cppdev
-ARG USER_ID=1000
-ARG GROUP_ID=1000
-ARG PROJECT_NAME="cpp-project-template"
 
 # -----------------------------------------------------------------------------
 # Install common C++ dev tools and utilities
@@ -36,28 +33,17 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------------------
-# Create user/group
+# Configure the existing 'ubuntu' user (UID/GID will be remapped at runtime)
 # ------------------------------------------------------------------------------
-RUN if [ -z "$(getent group $GROUP_ID)" ]; then \
-        groupadd -g $GROUP_ID "$USERNAME"; \
-    else \
-        groupmod -n "$USERNAME" "$(getent group $GROUP_ID | cut -d: -f1)"; \
-    fi && \
-    if [ -z "$(getent passwd $USER_ID)" ]; then \
-        useradd -m -u $USER_ID -g $GROUP_ID "$USERNAME"; \
-    else \
-        usermod -l "$USERNAME" -d /home/"$USERNAME" -m "$(getent passwd $USER_ID | cut -d: -f1)"; \
-    fi
+RUN echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
+    && chmod 0440 /etc/sudoers.d/ubuntu
 
 # ------------------------------------------------------------------------------
-# Allow passwordless sudo
+# Configure bash with colors for ubuntu user
 # ------------------------------------------------------------------------------
-RUN echo "$USERNAME ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-# ------------------------------------------------------------------------------
-# Enable colored shell prompt
-# ------------------------------------------------------------------------------
-RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' /home/$USERNAME/.bashrc
+RUN echo 'export PS1="\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> /home/ubuntu/.bashrc \
+    && echo 'alias ls="ls --color=auto"' >> /home/ubuntu/.bashrc \
+    && echo 'alias grep="grep --color=auto"' >> /home/ubuntu/.bashrc
 
 # -----------------------------------------------------------------------------
 # Install pre-commit for code quality checks
@@ -65,18 +51,18 @@ RUN sed -i 's/#force_color_prompt=yes/force_color_prompt=yes/g' /home/$USERNAME/
 RUN pip3 install --break-system-packages pre-commit cmake-format
 
 # ------------------------------------------------------------------------------
-# Set project workspace directory
+# Copy entrypoint script
 # ------------------------------------------------------------------------------
-RUN mkdir -p /workspaces/$PROJECT_NAME && \
-    chown -R $USERNAME:$USERNAME /workspaces
+COPY .devcontainer/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # ------------------------------------------------------------------------------
-# Switch to dev user
+# Set working directory
 # ------------------------------------------------------------------------------
-USER $USERNAME
-WORKDIR /workspaces/${PROJECT_NAME}
+WORKDIR /workspaces
 
 # ------------------------------------------------------------------------------
-# Default shell
+# Use entrypoint to handle UID/GID remapping at runtime
 # ------------------------------------------------------------------------------
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["/bin/bash"]

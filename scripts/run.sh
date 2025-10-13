@@ -2,7 +2,8 @@
 set -e
 
 # ------------------------------------------------------------------------------
-# Run the prebuilt cpp-dev Docker image interactively with matching settings
+# Run the prebuilt cpp-dev Docker image interactively
+# Passes host UID/GID for runtime remapping (matches DevContainer behavior)
 # ------------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
@@ -19,10 +20,13 @@ fi
 
 # ------------------------------------------------------------------------------
 # Run the container with DevContainer-compatible settings
+# Pass HOST_UID and HOST_GID for runtime remapping
 # ------------------------------------------------------------------------------
 docker run --rm -it \
     --hostname cpp-devcontainer \
-    --name cpp-devcontainer \
+    --name "cpp-dev-${USER}" \
+    --env "HOST_UID=$(id -u)" \
+    --env "HOST_GID=$(id -g)" \
     --env "DISPLAY=${DISPLAY}" \
     --volume /tmp/.X11-unix:/tmp/.X11-unix \
     --volume "$PROJECT_ROOT:/workspaces/$PROJECT_NAME" \
