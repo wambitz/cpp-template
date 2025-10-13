@@ -248,8 +248,8 @@ RUN groupadd --gid 1000 ubuntu \
 **Universal Approach** (supports both 22.04 and 24.04):
 ```dockerfile
 # Create ubuntu user if it doesn't exist
-RUN groupadd --gid 1000 ubuntu 2>/dev/null || true \
-    && useradd --uid 1000 --gid 1000 -m -s /bin/bash ubuntu 2>/dev/null || true \
+RUN getent group ubuntu || groupadd --gid 1000 ubuntu \
+    && id ubuntu || useradd --uid 1000 --gid 1000 -m -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
 ```
