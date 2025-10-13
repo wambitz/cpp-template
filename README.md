@@ -33,20 +33,24 @@ ctest --test-dir build --output-on-failure   # if tests enabled
 .
 ├── CMakeLists.txt           root build script
 ├── src/                     production code
-│   ├── example_public_private/ CMake visibility examples
-│   ├── example_interface/   interface library example
-│   ├── example_usage/       library usage patterns
-│   ├── example_static/      static library example
-│   ├── example_shared/      shared library example
-│   ├── example_plugin_loader/ runtime plugin loader
-│   ├── example_plugin_impl/ sample plugin
+│   ├── example_public_private/ PUBLIC vs PRIVATE visibility (see README)
+│   ├── example_interface/   INTERFACE library (header-only)
+│   ├── example_static/      static library example (.a)
+│   ├── example_shared/      shared library example (.so + RPATH)
+│   ├── example_plugin_loader/ runtime plugin loader (dlopen)
+│   ├── example_plugin_impl/ sample plugin implementation
 │   └── main/                console application
 ├── tests/                   unit tests (GoogleTest)
 ├── external/                third-party code (empty by default)
 ├── scripts/                 helper scripts
-├── docs/                    Doxygen config and RPATH guide
+├── docs/                    documentation (Doxygen, guides)
 └── .devcontainer/           VS Code container files
 ```
+
+### Documentation
+
+- **PUBLIC/PRIVATE visibility**: See [docs/public-private-guide.md](docs/public-private-guide.md)
+- **RPATH configuration**: See [docs/rpath-guide.md](docs/rpath-guide.md)
 
 ---
 
