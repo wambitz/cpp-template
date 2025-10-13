@@ -4,6 +4,9 @@ set -e
 ###############################################################################
 # Build the C++ Dev Docker image
 #
+# This image uses runtime UID/GID remapping for portability.
+# No user-specific build args needed - same image works for all users.
+#
 # Usage:
 #   ./scripts/build_image.sh [--tag <image_tag>]
 #
@@ -12,7 +15,6 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-PROJECT_NAME="$(basename "$PROJECT_ROOT")"
 DOCKERFILE_PATH="${PROJECT_ROOT}/Dockerfile"
 
 IMAGE_TAG="cpp-dev:latest"
@@ -22,15 +24,12 @@ IMAGE_TAG="cpp-dev:latest"
 # ------------------------------------------------------------------------------
 echo "[INFO] Building Docker image: ${IMAGE_TAG}"
 echo "[INFO] Dockerfile: ${DOCKERFILE_PATH}"
-echo "[INFO] Project name: ${PROJECT_NAME}"
+echo "[INFO] Using runtime UID/GID remapping (portable image)"
 
 docker build \
   -f "${DOCKERFILE_PATH}" \
   -t "${IMAGE_TAG}" \
-  --build-arg USERNAME="$(whoami)" \
-  --build-arg USER_ID="$(id -u)" \
-  --build-arg GROUP_ID="$(id -g)" \
-  --build-arg PROJECT_NAME="${PROJECT_NAME}" \
   "${PROJECT_ROOT}"
 
 echo "[INFO] Docker image '${IMAGE_TAG}' built successfully."
+echo "[INFO] This image will adapt to any user's UID/GID at runtime."

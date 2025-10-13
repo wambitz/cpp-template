@@ -2,9 +2,19 @@
   "name": "C++ DevContainer",
   "image": "cpp-dev:latest",
 
-  "initializeCommand": "./scripts/build_image.sh",
+  // Build image before starting container
+  "initializeCommand": "bash ${localWorkspaceFolder}/scripts/build_image.sh",
 
-  "updateRemoteUserUID": false,
+  // Pass host UID/GID to container for runtime remapping
+  "containerEnv": {
+    "HOST_UID": "${localEnv:UID}",
+    "HOST_GID": "${localEnv:GID}"
+  },
+
+  // Start container as root to allow entrypoint to remap UID/GID
+  "containerUser": "root",
+  // VS Code will connect as ubuntu user (with remapped UID/GID)
+  "remoteUser": "ubuntu",
 
   "customizations": {
     "vscode": {
@@ -23,10 +33,11 @@
 
   "postStartCommand": "bash",
 
+  // Clean container name and setup
   "runArgs": [
     "--rm",
     "--hostname", "cpp-devcontainer",
-    "--name", "cpp-devcontainer",
+    "--name", "cpp-dev-${localEnv:USER}",
     "--env", "DISPLAY=${localEnv:DISPLAY}",
     "--volume", "/tmp/.X11-unix:/tmp/.X11-unix",
     "--gpus", "all"

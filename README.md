@@ -147,6 +147,8 @@ xdg-open docs/html/index.html
 
 ## Docker and DevContainer
 
+This project uses a **portable Docker image** with runtime UID/GID remapping. The same image works for all users without rebuilding.
+
 Build image
 
 ```bash
@@ -159,7 +161,9 @@ Run interactive container
 ./scripts/run.sh
 ```
 
-VS Code users can reopen the workspace in the container.
+VS Code users can reopen the workspace in the container. The devcontainer automatically handles UID/GID mapping to match your host user.
+
+**For detailed information about the DevContainer setup, see [docs/devcontainer-guide.md](docs/devcontainer-guide.md)**
 
 ---
 
