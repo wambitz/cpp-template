@@ -33,7 +33,7 @@ The Docker development environment automatically adapts to any user's UID/GID at
 │         ↓                                               │
 │  entrypoint.sh receives HOST_UID/HOST_GID               │
 │         ↓                                               │
-│  Remaps ubuntu user: 1000 → your UID (e.g., 1000)       │
+│  Remaps ubuntu user: 1000 → your UID (e.g., 1001)       │
 │         ↓                                               │
 │  Drops to ubuntu user and runs command                  │
 │         ↓                                               │
