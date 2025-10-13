@@ -51,6 +51,7 @@ ctest --test-dir build --output-on-failure   # if tests enabled
 
 - **PUBLIC/PRIVATE visibility**: See [docs/public-private-guide.md](docs/public-private-guide.md)
 - **RPATH configuration**: See [docs/rpath-guide.md](docs/rpath-guide.md)
+- **DevContainer setup**: See [docs/devcontainer-guide.md](docs/devcontainer-guide.md)
 
 ---
 
@@ -136,7 +137,9 @@ On each commit clang-format rewrites staged files and clang-tidy analyses them.
 
 ---
 
-## Documentation
+## API Documentation (Doxygen)
+
+Generate HTML documentation from code comments:
 
 ```bash
 ./scripts/docs.sh
