@@ -8,7 +8,6 @@
 #include "example_public_private.hpp"
 #include "example_shared.hpp"
 #include "example_static.hpp"
-#include "example_usage.hpp"
 #include "plugin_api.hpp"
 
 // Helper class to capture stdout
@@ -68,15 +67,7 @@ TEST(ExampleInterfaceTest, InlineFunctionExecutes)
     EXPECT_NO_THROW(example_interface());
 }
 
-// Test the usage library
-TEST(ExampleUsageTest, FunctionExecutes)
-{
-    OutputCapture capture;
-    EXPECT_NO_THROW(example_usage());
-    std::string output = capture.getOutput();
-    EXPECT_FALSE(output.empty());
-    EXPECT_NE(output.find("Usage example"), std::string::npos);
-}
+
 
 // Test plugin loading with invalid path (should not crash)
 TEST(PluginLoaderTest, InvalidPluginPath)
@@ -130,7 +121,6 @@ TEST(IntegrationTest, AllFunctionsTogether)
         example_shared_function();
         example_public();
         example_interface();
-        example_usage();
     });
 
     std::string output = capture.getOutput();
@@ -140,7 +130,6 @@ TEST(IntegrationTest, AllFunctionsTogether)
     EXPECT_NE(output.find("Static library"), std::string::npos);
     EXPECT_NE(output.find("Shared library"), std::string::npos);
     EXPECT_NE(output.find("Public function"), std::string::npos);
-    EXPECT_NE(output.find("Usage example"), std::string::npos);
 }
 
 // Test edge cases and additional functionality
@@ -160,16 +149,16 @@ TEST(ExampleLibrariesTest, OutputContainsExpectedStrings)
     EXPECT_NE(shared_output.find("Shared library example!"), std::string::npos);
 }
 
-TEST(ExampleUsageTest, CallsOtherFunctions)
+TEST(ExamplePublicPrivateTest, CallsPrivateFunction)
 {
     OutputCapture capture;
-    example_usage();
+    example_public();
     std::string output = capture.getOutput();
 
-    // example_usage calls example_public() and example_interface()
-    // so we should see those outputs too
-    EXPECT_NE(output.find("Usage example!"), std::string::npos);
+    // example_public() calls private_example() internally
+    // so we should see output from both functions
     EXPECT_NE(output.find("Public function example!"), std::string::npos);
+    EXPECT_NE(output.find("Private function example!"), std::string::npos);
 }
 
 int main(int argc, char** argv)
