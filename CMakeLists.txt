@@ -40,7 +40,6 @@ endif()
 
 add_subdirectory(src/example_public_private)
 add_subdirectory(src/example_interface)
-add_subdirectory(src/example_usage)
 add_subdirectory(src/example_static)
 add_subdirectory(src/example_shared)
 add_subdirectory(src/example_plugin_loader)

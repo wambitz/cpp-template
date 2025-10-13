@@ -2,7 +2,6 @@
 #include "example_public_private.hpp"
 #include "example_shared.hpp"
 #include "example_static.hpp"
-#include "example_usage.hpp"
 #include "plugin_api.hpp"
 #include <iostream>
 
@@ -13,7 +12,6 @@ int main(int argc, char** argv)
     example_shared_function();
     example_public();
     example_interface();
-    example_usage();
 
     // Plugin loading with RPATH-based discovery
     // dlopen() uses RPATH to find plugin automatically - no hardcoded paths!

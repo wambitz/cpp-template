@@ -6,7 +6,6 @@
 #include "example_public_private.hpp"
 #include "example_shared.hpp"
 #include "example_static.hpp"
-#include "example_usage.hpp"
 
 class IntegrationTest : public ::testing::Test
 {
@@ -31,7 +30,6 @@ TEST_F(IntegrationTest, AllFunctionsTogether)
         example_shared_function();
         example_public();
         example_interface();
-        example_usage();
     });
 
     std::string output = capture.getOutput();
@@ -41,7 +39,6 @@ TEST_F(IntegrationTest, AllFunctionsTogether)
     EXPECT_NE(output.find("Static library"), std::string::npos);
     EXPECT_NE(output.find("Shared library"), std::string::npos);
     EXPECT_NE(output.find("Public function"), std::string::npos);
-    EXPECT_NE(output.find("Usage example"), std::string::npos);
 }
 
 TEST_F(IntegrationTest, LibrariesWorkIndependently)
@@ -74,27 +71,18 @@ TEST_F(IntegrationTest, LibrariesWorkIndependently)
 
     // Test interface (no output expected)
     EXPECT_NO_THROW(example_interface());
-
-    // Test usage library
-    {
-        OutputCapture capture;
-        example_usage();
-        std::string output = capture.getOutput();
-        EXPECT_NE(output.find("Usage example!"), std::string::npos);
-    }
 }
 
 TEST_F(IntegrationTest, CrossLibraryDependencies)
 {
-    // Test that libraries with dependencies work correctly
+    // Test that example_public_private correctly uses its private dependency
     OutputCapture capture;
 
-    // example_usage depends on other libraries
-    example_usage();
+    // example_public depends on private_example
+    example_public();
     std::string output = capture.getOutput();
 
-    // Should see output from multiple libraries
-    EXPECT_NE(output.find("Usage example!"), std::string::npos);
+    // Should see output from both public and private functions
     EXPECT_NE(output.find("Public function example!"), std::string::npos);
     EXPECT_NE(output.find("Private function example!"), std::string::npos);
 }
@@ -110,15 +98,17 @@ TEST_F(IntegrationTest, FullApplicationWorkflow)
         example_shared_function();
         example_public();
         example_interface();
-        example_usage();
     });
 
     std::string output = capture.getOutput();
 
     // Verify all expected components are present
     std::vector<std::string> expected_outputs = {
-        "Static library example!", "Shared library example!", "Public function example!",
-        "Private function example!", "Usage example!"};
+        "Static library example!", 
+        "Shared library example!", 
+        "Public function example!",
+        "Private function example!"
+    };
 
     for (const auto& expected : expected_outputs)
     {
