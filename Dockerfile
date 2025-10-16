@@ -53,7 +53,7 @@ RUN pip3 install --break-system-packages pre-commit cmake-format
 # ------------------------------------------------------------------------------
 # Copy entrypoint script
 # ------------------------------------------------------------------------------
-COPY .devcontainer/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY scripts/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # ------------------------------------------------------------------------------

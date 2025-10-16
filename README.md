@@ -113,6 +113,7 @@ bazel build //libmath:math
 | `package.sh`          | Build and create distributable packages (Release mode) |
 | `run.sh`              | Launch Docker dev container           |
 | `build_image.sh`      | Build the `cpp-dev:latest` image      |
+| `entrypoint.sh`       | Docker entrypoint for UID/GID remapping |
 | `format.sh`           | Run clang-format on sources           |
 | `lint.sh`             | Run clang-tidy using compile commands |
 | `docs.sh`             | Generate HTML docs                    |
