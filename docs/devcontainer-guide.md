@@ -60,7 +60,7 @@ VS Code DevContainer configuration:
 - `containerEnv` - Passes `HOST_UID` and `HOST_GID` to entrypoint
 - `initializeCommand` - Builds image before starting container
 
-### `.devcontainer/entrypoint.sh`
+### `scripts/entrypoint.sh`
 Runtime UID/GID remapping script (26 lines):
 - Receives HOST_UID and HOST_GID from environment
 - Remaps ubuntu user/group to match host
@@ -175,7 +175,7 @@ docker run --rm \
 **Solution**: 
 1. Check that `remoteUser: "ubuntu"` is set in devcontainer.json
 2. Check container logs: `docker logs cpp-dev-$(whoami)`
-3. Verify entrypoint script is executable: `chmod +x .devcontainer/entrypoint.sh`
+3. Verify entrypoint script is executable: `chmod +x scripts/entrypoint.sh`
 
 ### Permission denied errors inside container
 
