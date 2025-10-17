@@ -194,7 +194,7 @@ Expected output: `uid=5555(ubuntu) gid=5555(ubuntu)`
 **Resolution**:
 1. Verify entrypoint script execution completed successfully
 2. Inspect workspace ownership: `ls -la /workspaces`
-3. Rebuild container image: `./scripts/build_image.sh`
+3. Rebuild container image: `./scripts/docker/build_image.sh`
 
 ### UID Remains at Default Value
 
