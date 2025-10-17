@@ -91,7 +91,7 @@ Container image definition:
 
 Build the container image:
 ```bash
-./scripts/build_image.sh
+./scripts/docker/build_image.sh
 ```
 
 Start interactive container session:
