@@ -8,13 +8,13 @@ set -e
 # No user-specific build args needed - same image works for all users.
 #
 # Usage:
-#   ./scripts/build_image.sh [--tag <image_tag>]
+#   ./scripts/docker/build_image.sh [--tag <image_tag>]
 #
 # Default image tag: cpp-dev:latest
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 DOCKERFILE_PATH="${PROJECT_ROOT}/Dockerfile"
 
 IMAGE_TAG="cpp-dev:latest"

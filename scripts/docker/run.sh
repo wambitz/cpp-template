@@ -6,8 +6,8 @@ set -e
 # Passes host UID/GID for runtime remapping (matches DevContainer behavior)
 # ------------------------------------------------------------------------------
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-PROJECT_NAME="cpp-project-template"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+PROJECT_NAME="$(basename "$PROJECT_ROOT")"
 IMAGE_NAME="cpp-dev:latest"
 
 # ------------------------------------------------------------------------------

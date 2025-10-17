@@ -1,198 +1,141 @@
-# Debugging Guide (GDB)
+# GDB Debugging Guide
 
-> **Audience:** Developers working on this repository who want to step through the code with VS Code & GDB – regardless of whether they run locally, in a Dev Container, or by attaching to an already running container.
->
-> **TL;DR matrix**
->
-> | Scenario                      | Rec? | Pros                                                                                     | Cons / Gotchas                                                                                                                                                                                                             |
-> | ----------------------------- | ---- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-> | **Native (host)**             | 🚫   | Fast startup if you already have tool‑chain                                              | *Path collisions* when the same code is built inside the container ⇒ you must `rm -rf build/` and re‑configure each time you switch. Pollutes host with build deps; easy to forget `SYS_PTRACE` flags when running Docker. |
-> | **Dev Container**             | ✅    | Zero host pollution, extensions auto‑installed, paths identical, one‑click F5            | Needs Dev Containers extension; first launch slightly slower due to server copy                                                                                                                                            |
-> | **Attach → In‑container GDB** | 🟡   | Works if Dev Container isn’t possible (e.g., remote CI box)                              | Must ensure C/C++ extension exists in `~/.vscode-server`; manual install otherwise                                                                                                                                         |
-> | **Attach → `gdbserver`**      | 🟡   | Decouples build & run – good for prod‑like container that shouldn’t carry heavy dev deps | Requires `gdbserver` package inside image and `sourceFileMap` dance                                                                                                                                                        |
+This guide covers GDB debugging workflows for local, DevContainer, and remote container environments.
 
----
+## Debugging Approaches
 
-## 1  Native (host) – *not recommended*
+| Approach                      | Recommended | Advantages                                                                      | Limitations                                                                                                                                    |
+| ----------------------------- | ----------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Native (host)                 | No          | Fast startup with existing toolchain                                            | Path conflicts when switching between host and container builds require clean rebuilds; pollutes host with build dependencies                  |
+| Dev Container                 | Yes         | Isolated environment, automated extension installation, consistent paths        | Requires Dev Containers extension; initial launch includes server installation overhead                                                        |
+| Attach with container GDB     | Conditional | Applicable when DevContainer is unavailable (e.g., remote CI)                   | Requires C/C++ extension in ~/.vscode-server; manual installation may be necessary                                                           |
+| Attach with gdbserver         | Conditional | Separates build and runtime environments; suitable for production-like containers | Requires gdbserver package; needs sourceFileMap configuration for path translation                                                         |
+
+## Native Host Debugging
+
+Build on host system:
 
 ```bash
-# Host build
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
 cmake --build build -j$(nproc)
-code .   # open VS Code in repo root
+code .
 ```
 
-* If you later build **inside the container** the absolute paths embedded in `build/CMakeCache.txt` no longer match; CMake will complain and symbols won’t resolve. Delete the cache before each context‑switch:
+**Path Conflict Issue**: Building in both host and container environments creates path inconsistencies in build/CMakeCache.txt. When switching environments, remove the build cache:
 
 ```bash
-rm -rf build/  # then rebuild in the other environment
+rm -rf build/
 ```
 
-* Host must have GDB & compilers; you’ll need to install them manually.
+**Requirements**: Host system must have GDB and compiler toolchain installed.
 
-**Bottom line:** only useful for a quick edit when Docker isn’t available.
+**Use Case**: Quick edits when Docker is unavailable. Not recommended for regular development.
 
----
+## DevContainer Debugging
 
-## 2  Dev Container – *preferred workflow*
+### Prerequisites
 
-1. Install the **Dev Containers** and **C/C++** extensions in your desktop VS Code.
-2. Make sure the repo contains `.devcontainer/` with a `devcontainer.json` similar to:
+1. Install Dev Containers extension in VS Code
+2. Install C/C++ extension in VS Code
+3. Verify .devcontainer/devcontainer.json configuration
+
+### Workflow
+
+1. Execute: Dev Containers: Reopen in Container
+2. First launch installs VS Code server and extensions into container
+3. Subsequent launches connect immediately
+4. Use debug configuration from .vscode/launch.json
+
+Path consistency between host and container eliminates the need for sourceFileMap configuration.
+
+## Container Attach Debugging
+
+### Method 1: In-Container GDB
+
+Start container with ptrace capabilities:
+
+```bash
+docker run --rm -it \
+  --name "cpp-dev-gdbsrv" \
+  --cap-add=SYS_PTRACE \
+  --security-opt seccomp=unconfined \
+  -p 2345:2345 \
+  -v "${PWD}:/workspaces/cpp-project-template" \
+  "cpp-dev:latest"
+```
+
+Build project inside container to ensure symbol path consistency.
+
+Install VS Code extensions (required once per container):
+
+```bash
+~/.vscode-server/bin/<hash>/bin/code-server --install-extension ms-vscode.cpptools
+```
+
+Alternatively, use the VS Code UI to install extensions in the container.
+
+Debug configuration:
 
 ```jsonc
 {
-  "name": "C++ DevContainer (Prebuilt)",
-  "image": "cpp-dev:latest",  // <-- Replace with your real image tag (e.g. user/cpp-dev:1.0)
-
-  "initializeCommand": "./scripts/build_image.sh",
-
-  "updateRemoteUserUID": false,
-
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "terminal.integrated.shell.linux": "bash",
-        "editor.formatOnSave": true,
-        "C_Cpp.clang_format_style": "file",
-        "C_Cpp.default.cppStandard": "c++17"
-      },
-      "extensions": [
-        "ms-vscode.cpptools",
-        "ms-vscode.cmake-tools"
-      ]
-    }
-  },
-
-  "postStartCommand": "bash",
-
-  "runArgs": [
-    "--rm",
-    "--hostname", "cpp-devcontainer",
-    "--name", "cpp-devcontainer",
-    "--env", "DISPLAY=${localEnv:DISPLAY}",
-    "--volume", "/tmp/.X11-unix:/tmp/.X11-unix",
-    "--gpus", "all"
-    "--cap-add=SYS_PTRACE",
-    "--security-opt", "seccomp=unconfined"
-  ]
-}
-```
-
-3. In VS Code → **F1 › Dev Containers: Reopen in Container**.
-4. The first launch copies the VS Code server & listed extensions into the container. Subsequent opens are instant.
-5. Use **`Debug in container`** from `.vscode/launch.json`:
-
-```jsonc
-{
-  "name": "Debug in container",
+  "name": "Debug main_exec",
   "type": "cppdbg",
   "request": "launch",
   "program": "${workspaceFolder}/build/src/main/main_exec",
-  "cwd": "${workspaceFolder}",
   "stopAtEntry": true,
+  "cwd": "${workspaceFolder}/build/src/main",
   "MIMode": "gdb",
   "miDebuggerPath": "/usr/bin/gdb"
 }
 ```
 
-Everything is path‑consistent, so no `sourceFileMap` is needed.
+**Extension Persistence**: Extensions persist across container stop/start cycles but are removed when the container is deleted. Mount a volume at ~/.vscode-server for persistence across container recreation.
 
----
+### Method 2: gdbserver Attach
 
-## 3  Attaching to a running container (when you can’t use Dev Container)
+Install gdbserver in container image:
 
-### 3.1   Plain GDB inside the container
+```dockerfile
+RUN apt-get update && apt-get install -y gdbserver && rm -rf /var/lib/apt/lists/*
+```
 
-1. **Run the container** (don’t forget `ptrace` perms):
+Start gdbserver in container:
 
-    ```bash
-    docker run --rm -it \
-      --name "cpp-dev-gdbsrv" \
-      --cap-add=SYS_PTRACE \
-      --security-opt seccomp=unconfined \
-      -p 2345:2345 \
-      -v "${PWD}:/workspaces/cpp-project-template" \
-      "cpp-dev:latest" 
-    ```
+```bash
+/usr/bin/gdbserver :2345 /workspaces/cpp-project-template/build/src/main/main_exec
+```
 
-2. **Build** *inside* the container so symbols match paths.
-3. **Install VS Code extensions once** (only required for a fresh container):
+Host-side launch configuration:
 
-   ```bash
-   ~/.vscode-server/bin/<hash_id>/bin$ ./code-server --install-extension ms-vscode.cpptools # --force (optional)
-   ```
+```jsonc
+{
+  "name": "Attach to gdbserver in container",
+  "type": "cppdbg",
+  "request": "launch",
+  "program": "${workspaceFolder}/build/src/main/main_exec",
+  "miDebuggerServerAddress": "localhost:2345",
+  "MIMode": "gdb",
+  "stopAtEntry": true,
+  "sourceFileMap": {
+    "/workspaces/cpp-project-template": "${workspaceFolder}"
+  },
+  "cwd": "${workspaceFolder}"
+}
+```
 
-   *Alternative:* click *Install in Container* from the VS Code UI.
+**Path Translation**: The sourceFileMap translates container paths to host paths for breakpoint resolution. If the project is mounted at identical paths in both environments, this mapping can be omitted.
 
-4. Use `Debug main_exec` / `Debug unit_tests` configs:
+## Troubleshooting
 
-   ```jsonc
-   {
-     "name": "Debug main_exec",
-     "type": "cppdbg",
-     "request": "launch",
-     "program": "${workspaceFolder}/build/src/main/main_exec",
-     "stopAtEntry": true,
-     "cwd": "${workspaceFolder}/build/src/main",
-     "MIMode": "gdb",
-     "miDebuggerPath": "/usr/bin/gdb"
-   }
-   ```
+| Symptom                                    | Resolution                                                                                        |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| Breakpoint appears as hollow circle        | Rebuild with -g -O0; verify file path in DEBUG CONSOLE                                          |
+| cppdbg: cannot find executable           | Verify program path in launch configuration; ensure build directory exists                      |
+| Configured debug type 'cppdbg' not supported | Install C/C++ extension on remote side via DevContainer or CLI                                    |
+| GDB ptrace operation fails                 | Start container with --cap-add=SYS_PTRACE --security-opt seccomp=unconfined                     |
+| CMake cache mismatch between environments  | Execute rm -rf build/ and reconfigure in current environment                                    |
 
-5. **Persistence rule:** extensions live in the container filesystem. `docker stop/start` keeps them; `docker rm` wipes them unless you mounted a volume at `~/.vscode-server`.
-
-### 3.2   `gdbserver` attach (decoupled build vs. run)
-
-1. **Ensure `gdbserver` package is in the image** (Ubuntu example):
-
-    ```dockerfile
-    RUN apt-get update && apt-get install -y gdbserver && rm -rf /var/lib/apt/lists/*
-    ```
-
-2. **Run the container** and start the server:
-
-    ```bash
-    # inside the container
-    /usr/bin/gdbserver :2345 /workspaces/cpp-project-template/build/src/main/main_exec
-    ```
-
-3. **Host‑side `launch.json`:**
-
-    ```jsonc
-    {
-      "name": "Attach to gdbserver in container",
-      "type": "cppdbg",
-      "request": "launch",
-      "program": "${workspaceFolder}/build/src/main/main_exec",
-      "miDebuggerServerAddress": "localhost:2345",
-      "MIMode": "gdb",
-      "stopAtEntry": true,
-      "sourceFileMap": {
-        "/workspaces/cpp-project-template": "${workspaceFolder}"
-      },
-      "cwd": "${workspaceFolder}"
-    }
-    ```
-
-4. **Why `sourceFileMap`?** The binary contains container paths; this map tells VS Code how to translate them to your host checkout so breakpoints resolve.
-
-    *Tip:* mounting the project at the **same absolute path** inside and outside (`-v "$PWD":$PWD`) lets you drop `sourceFileMap` entirely.
-
----
-
-## 4  Troubleshooting cheatsheet
-
-| Symptom                                           | Fix                                                                                    |
-| ------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Breakpoint is hollow gray                         | Rebuild with `-g -O0`; check that VS Code found the right file path (`DEBUG CONSOLE`). |
-| `cppdbg: cannot find executable`                  | Path in `program` is wrong or build dir hasn’t been generated. Build first.            |
-| “Configured debug type ‘cppdbg’ is not supported” | C/C++ extension missing on **remote side** – install via Dev Container or CLI.         |
-| GDB fails `ptrace`                                | Run container with `--cap-add=SYS_PTRACE --security-opt seccomp=unconfined`.           |
-| CMake cache mismatch when switching envs          | `rm -rf build/` and re‑configure in the current environment.                           |
-
----
-
-### Appendix – Full sample `launch.json`
+## Launch Configuration Reference
 
 ```jsonc
 {
@@ -222,8 +165,7 @@ Everything is path‑consistent, so no `sourceFileMap` is needed.
       "miDebuggerPath": "/usr/bin/gdb",
       "externalConsole": false
     },
-    { // NOTE: This needs gdbserver installed and running
-      // See: docs/remote-debugging.md and scripts/launch_gdbserver.sh
+    {
       "name": "Attach to gdbserver in container",
       "type": "cppdbg",
       "request": "launch",
@@ -232,7 +174,7 @@ Everything is path‑consistent, so no `sourceFileMap` is needed.
       "MIMode": "gdb",
       "stopAtEntry": true,
       "sourceFileMap": {
-          "/workspaces/cpp-project-template": "${workspaceFolder}"
+        "/workspaces/cpp-project-template": "${workspaceFolder}"
       },
       "cwd": "${workspaceFolder}"
     }
