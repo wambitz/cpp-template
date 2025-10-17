@@ -4,7 +4,7 @@ A modern, production-ready template for C++ development.
 
 | Capability      | Tool / Setup                           | Status |
 | --------------- | -------------------------------------- | ------ |
-| Build           | CMake ≥ 3.16 (default) · Bazel example | ✔      |
+| Build           | CMake ≥ 3.16                           | ✔      |
 | Unit tests      | GoogleTest (optional)                  | ✔      |
 | Formatting      | clang-format (pre-commit)              | ✔      |
 | Linting         | clang-tidy (pre-commit)                | ✔      |
@@ -96,32 +96,33 @@ your-package/
 
 **For detailed RPATH explanation, examples, and troubleshooting, see [docs/rpath-guide.md](docs/rpath-guide.md)**
 
-### Bazel
-
-```bash
-cd bazel_workspace
-bazel build //libmath:math
-```
-
 ---
 
 ## Scripts
 
-| Script                | Purpose                               |
-| --------------------- | ------------------------------------- |
-| `build.sh`            | Configure and compile (Debug mode)   |
-| `package.sh`          | Build and create distributable packages (Release mode) |
-| `run.sh`              | Launch Docker dev container           |
-| `build_image.sh`      | Build the `cpp-dev:latest` image      |
-| `entrypoint.sh`       | Docker entrypoint for UID/GID remapping |
-| `format.sh`           | Run clang-format on sources           |
-| `lint.sh`             | Run clang-tidy using compile commands |
-| `docs.sh`             | Generate HTML docs                    |
+### Build and Development
 
-### Build vs Package
+| Script       | Purpose                                              |
+| ------------ | ---------------------------------------------------- |
+| `build.sh`   | Configure and compile (Debug mode)                   |
+| `package.sh` | Build and create distributable packages (Release)    |
+| `format.sh`  | Run clang-format on sources                          |
+| `lint.sh`    | Run clang-tidy using compile commands                |
+| `docs.sh`    | Generate HTML docs                                   |
 
-- **`./scripts/build.sh`**: Debug build for development (fast compilation, debug symbols)  
-- **`./scripts/package.sh`**: Release build + CPack packaging (optimized, distributable)
+**Build vs Package:**
+- `./scripts/build.sh` — Debug build for development (fast compilation, debug symbols)
+- `./scripts/package.sh` — Release build + CPack packaging (optimized, distributable)
+
+### Docker
+
+Docker-related scripts live under `scripts/docker/`:
+
+| Script           | Purpose                                           |
+| ---------------- | ------------------------------------------------- |
+| `build_image.sh` | Build the `cpp-dev:latest` image                  |
+| `run.sh`         | Run the dev container with UID/GID remap          |
+| `attach.sh`      | Attach to running container as `ubuntu`           |
 
 ---
 
@@ -156,16 +157,38 @@ This project uses a **portable Docker image** with runtime UID/GID remapping. Th
 Build image
 
 ```bash
-./scripts/build_image.sh
+./scripts/docker/build_image.sh
 ```
 
 Run interactive container
 
 ```bash
-./scripts/run.sh
+./scripts/docker/run.sh
 ```
 
-VS Code users can reopen the workspace in the container. The devcontainer automatically handles UID/GID mapping to match your host user.
+Attach to the running container
+
+```bash
+./scripts/docker/attach.sh
+```
+
+This attaches as user `ubuntu` (with remapped UID/GID). If the container isn't running, the script will fail—start it first with `./scripts/docker/run.sh`.
+
+**Customize attach behavior:**
+
+To attach as root (for system administration):
+```bash
+docker exec -it -u root cpp-dev-${USER} bash
+```
+
+To attach with your host UID/GID directly:
+```bash
+docker exec -it -u "$(id -u):$(id -g)" cpp-dev-${USER} bash
+```
+
+**VS Code DevContainer:**
+
+VS Code users can reopen the workspace in the container. The Dev Container uses the prebuilt `cpp-dev:latest` image and relies on a runtime entrypoint to remap UID/GID (no extra `vsc-…-uid` image is created).
 
 **For detailed information about the DevContainer setup, see [docs/devcontainer-guide.md](docs/devcontainer-guide.md)**
 

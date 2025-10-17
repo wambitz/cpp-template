@@ -1,45 +1,57 @@
-# RPATH Guide: Understanding Runtime Library Discovery
+# RPATH Guide: Runtime Library Discovery
 
-This guide explains how RPATH works in this C++ project template, with practical examples and beginner-friendly explanations.
+This guide explains RPATH implementation in this C++ project template, including configuration, usage patterns, and troubleshooting.
 
-## What is RPATH?
+## RPATH Overview
 
-**RPATH** (Runtime Path) is a mechanism that tells your executable where to find shared libraries at runtime. Think of it as "GPS coordinates" embedded directly in your executable that point to library locations.
+RPATH (Runtime Path) specifies library search paths embedded directly in executable files. This mechanism enables the dynamic linker to locate shared libraries at runtime without relying on system-wide configuration or environment variables.
 
-## The Problem RPATH Solves
+## Problem Statement
 
-### Without RPATH
-When you run `./main_exec`, the system looks for shared libraries like `libexample_shared.so` in these locations (in order):
+### Default Library Search Order
 
-1. System directories (`/lib/`, `/usr/lib/`, `/usr/local/lib/`)
-2. Directories listed in `LD_LIBRARY_PATH` environment variable
-3. Current working directory (sometimes)
+When executing a binary, the dynamic linker searches for shared libraries in the following order:
 
-**Problem**: Your custom libraries are in `../lib/` relative to your executable, not in these standard locations!
+1. Directories in LD_LIBRARY_PATH environment variable
+2. System directories (/lib, /usr/lib, /usr/local/lib)
+3. Paths specified in /etc/ld.so.conf
 
-### Traditional "Solutions" and Their Problems
+### Challenge
+
+Project-specific shared libraries located outside standard system directories (e.g., ../lib relative to the executable) are not automatically discovered.
+
+### Traditional Approaches and Limitations
+
 ```bash
-# Option 1: Set LD_LIBRARY_PATH (fragile)
-export LD_LIBRARY_PATH=/path/to/your/lib:$LD_LIBRARY_PATH
+# Approach 1: Environment variable configuration
+export LD_LIBRARY_PATH=/path/to/lib:$LD_LIBRARY_PATH
 ./main_exec
 
-# Option 2: Copy libraries to system dirs (pollutes system)
+# Approach 2: System directory installation
 sudo cp lib*.so /usr/local/lib/
 
-# Option 3: Hardcode absolute paths (not portable)
+# Approach 3: Absolute path specification
 dlopen("/absolute/path/to/plugin.so", RTLD_LAZY);
 ```
 
+Limitations:
+- Approach 1: Fragile, requires per-session configuration
+- Approach 2: Pollutes system directories, requires administrative privileges
+- Approach 3: Non-portable, breaks when installation paths change
+
 ### RPATH Solution
-RPATH embeds the library search path directly in the executable, making it self-contained and portable.
+
+RPATH embeds library search paths directly in the executable, creating self-contained, portable binaries that function independently of environment configuration.
 
 ## RPATH Syntax
 
 ### Special Variables
-- **`$ORIGIN`**: The directory containing the executable (resolved at runtime)
-- **`$LIB`**: Platform-specific lib directory (lib64 on some systems)
+
+- `$ORIGIN`: Directory containing the executable (resolved at runtime)
+- `$LIB`: Platform-specific library directory (e.g., lib64 on some systems)
 
 ### Common Patterns
+
 ```cmake
 # Libraries in same directory as executable
 set(CMAKE_INSTALL_RPATH "$ORIGIN")
@@ -51,112 +63,129 @@ set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN")
 ```
 
-## How This Project Uses RPATH
+## Project Implementation
 
-### Project Structure
+### Directory Structure
+
 ```
 package/
 ├── bin/
-│   └── main_exec          ← Executable with RPATH: $ORIGIN/../lib
+│   └── main_exec          (RPATH: $ORIGIN/../lib)
 └── lib/
-    ├── libexample_shared.so       ← Linked at compile time
-    └── libexample_plugin_impl.so  ← Loaded at runtime via dlopen()
+    ├── libexample_shared.so       (Linked at compile time)
+    └── libexample_plugin_impl.so  (Loaded at runtime via dlopen)
 ```
 
 ### CMake Configuration
+
 ```cmake
 # In src/main/CMakeLists.txt
 set_target_properties(main_exec PROPERTIES
-    # For development builds (relative to build directory)
+    # Development builds (relative to build directory)
     BUILD_RPATH "${CMAKE_BINARY_DIR}/lib"
     
-    # For installed builds (relative to installation)
+    # Installed builds (relative to installation directory)
     INSTALL_RPATH "$ORIGIN/../lib"
     
-    # Use RPATH for both build and install
+    # Use BUILD_RPATH during development
     BUILD_WITH_INSTALL_RPATH OFF
 )
 ```
 
 ### Runtime Behavior
 
-#### 1. Compile-time Linked Libraries
+#### Compile-Time Linked Libraries
+
 ```cpp
-// In main.cpp - automatically found via RPATH
+// In main.cpp
 #include "example_shared.hpp"
 int main() {
-    example_shared::greet();  // Library found automatically
+    example_shared::greet();
 }
 ```
 
-When you run `./bin/main_exec`:
-1. System reads RPATH from executable: `$ORIGIN/../lib`
+Execution sequence:
+1. Dynamic linker reads RPATH from executable: `$ORIGIN/../lib`
 2. Resolves `$ORIGIN` to `/path/to/package/bin`
 3. Searches for `libexample_shared.so` in `/path/to/package/lib`
-4. Loads library automatically
+4. Loads library
 
-#### 2. Runtime Plugin Loading
+#### Runtime Plugin Loading
+
 ```cpp
-// In plugin_loader.cpp - dlopen() respects RPATH
+// In plugin_loader.cpp
 void* handle = dlopen("libexample_plugin_impl.so", RTLD_LAZY);
 ```
 
-When `dlopen()` is called:
-1. System checks RPATH from the calling executable
+Execution sequence:
+1. dlopen respects RPATH from calling executable
 2. Searches in `$ORIGIN/../lib` = `/path/to/package/lib`
-3. Finds and loads `libexample_plugin_impl.so`
+3. Loads `libexample_plugin_impl.so`
 
-## Development vs Installation
+## Build Environments
 
-### Development Build (build/)
+### Development Build
+
 ```
 build/
-├── main_exec              ← BUILD_RPATH: ./lib
+├── main_exec              (BUILD_RPATH: ./lib)
 ├── lib/
 │   ├── libexample_shared.so
-│   └── libexample_plugin_impl.so  ← Copied here by CMake
+│   └── libexample_plugin_impl.so  (Copied by CMake)
 └── src/example_plugin_impl/
-    └── libexample_plugin_impl.so   ← Original location
+    └── libexample_plugin_impl.so   (Original location)
 ```
 
-### Installed Package
+### Installation
+
 ```
 install/
 ├── bin/
-│   └── main_exec          ← INSTALL_RPATH: $ORIGIN/../lib
+│   └── main_exec          (INSTALL_RPATH: $ORIGIN/../lib)
 └── lib/
     ├── libexample_shared.so
     └── libexample_plugin_impl.so
 ```
 
-## Verifying RPATH
+## Verification
 
-### Check RPATH in Executable
+### RPATH Inspection
+
 ```bash
-# View RPATH
 readelf -d build/main_exec | grep -E "(RPATH|RUNPATH)"
-# or
-objdump -x build/main_exec | grep -E "(RPATH|RUNPATH)"
-
-# Expected output:
-# 0x000000000000000f (RPATH) Library rpath: [$ORIGIN/../lib]
 ```
 
-### Test Library Loading
-```bash
-# See which libraries are loaded
-ldd build/main_exec
+or
 
-# Trace library loading at runtime
+```bash
+objdump -x build/main_exec | grep -E "(RPATH|RUNPATH)"
+```
+
+Expected output:
+```
+0x000000000000000f (RPATH) Library rpath: [$ORIGIN/../lib]
+```
+
+### Library Resolution
+
+```bash
+ldd build/main_exec
+```
+
+### Runtime Trace
+
+```bash
 LD_DEBUG=libs ./build/main_exec 2>&1 | grep -E "(search|trying)"
 ```
 
-## Common RPATH Patterns
+## Configuration Patterns
 
-### Pattern 1: Libraries in Same Directory
+### Pattern 1: Collocated Libraries
+
 ```cmake
 set(CMAKE_INSTALL_RPATH "$ORIGIN")
 ```
+
 ```
 package/
 ├── app_exec
@@ -165,9 +194,11 @@ package/
 ```
 
 ### Pattern 2: Standard Unix Layout
+
 ```cmake
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib")
 ```
+
 ```
 package/
 ├── bin/app_exec
@@ -177,9 +208,11 @@ package/
 ```
 
 ### Pattern 3: Multiple Search Paths
+
 ```cmake
 set(CMAKE_INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/../plugins:$ORIGIN")
 ```
+
 ```
 package/
 ├── bin/app_exec
@@ -190,47 +223,50 @@ package/
 
 ## Best Practices
 
-### ✅ Do
-- Use `$ORIGIN` for portable, relocatable packages
-- Set both `BUILD_RPATH` and `INSTALL_RPATH` appropriately
-- Test your packages on different systems
-- Use relative paths in RPATH when possible
+### Recommended
 
-### ❌ Don't
-- Hardcode absolute paths in RPATH
-- Rely on `LD_LIBRARY_PATH` for production deployments
-- Copy libraries to system directories
-- Use RPATH for system libraries (they're already in standard locations)
+- Use `$ORIGIN` for portable, relocatable packages
+- Configure both `BUILD_RPATH` and `INSTALL_RPATH`
+- Test packages across different systems
+- Prefer relative paths in RPATH
+
+### Not Recommended
+
+- Hardcoding absolute paths in RPATH
+- Relying on `LD_LIBRARY_PATH` for production deployments
+- Installing libraries to system directories
+- Using RPATH for system libraries (already in standard locations)
 
 ## Troubleshooting
 
 ### Library Not Found
+
 ```
-./main_exec: error while loading shared libraries: libexample_shared.so: cannot open shared object file
+error while loading shared libraries: libexample_shared.so: cannot open shared object file
 ```
 
-**Debug steps:**
-1. Check RPATH: `readelf -d main_exec | grep RPATH`
-2. Verify library exists: `ls -la lib/libexample_shared.so`
+Diagnostic steps:
+1. Verify RPATH: `readelf -d main_exec | grep RPATH`
+2. Confirm library exists: `ls -la lib/libexample_shared.so`
 3. Check permissions: `file lib/libexample_shared.so`
 4. Trace loading: `LD_DEBUG=libs ./main_exec`
 
-### Plugin Loading Fails
+### Plugin Loading Failure
+
 ```cpp
-// dlopen() returns NULL
 void* handle = dlopen("libplugin.so", RTLD_LAZY);
 if (!handle) {
     std::cerr << "dlopen error: " << dlerror() << std::endl;
 }
 ```
 
-**Debug steps:**
-1. Verify plugin exists in RPATH directories
+Diagnostic steps:
+1. Verify plugin presence in RPATH directories
 2. Check plugin dependencies: `ldd lib/libplugin.so`
-3. Ensure plugin exports expected symbols: `nm -D lib/libplugin.so`
+3. Verify exported symbols: `nm -D lib/libplugin.so`
 
-## Further Reading
+## References
 
-- [Linux man page: ld.so(8)](https://man7.org/linux/man-pages/man8/ld.so.8.html)
-- [CMake RPATH Documentation](https://cmake.org/Wiki/CMake_RPATH_handling)
-- [Shared Libraries Best Practices](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html)
+- [Linux Manual: ld.so(8)](https://man7.org/linux/man-pages/man8/ld.so.8.html)
+- [CMake RPATH Handling](https://cmake.org/Wiki/CMake_RPATH_handling)
+- [Shared Libraries Guide](https://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html)

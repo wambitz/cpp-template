@@ -1,103 +1,105 @@
 # DevContainer Configuration Guide
 
-This project uses a **runtime UID/GID remapping** approach for maximum portability and simplicity.
+This project implements runtime UID/GID remapping to ensure portability across different development environments.
 
 ## Overview
 
-The Docker development environment automatically adapts to any user's UID/GID at runtime, eliminating permission issues and ensuring files created in the container have correct ownership on the host.
+The Docker development environment dynamically adapts to user-specific UID/GID values at container startup, eliminating file ownership conflicts between the container and host filesystem.
 
-## How It Works
+## Mechanism
 
-1. **Build Time**: 
-   - Uses Ubuntu 24.04's built-in `ubuntu` user (UID/GID 1000 by default)
-   - Installs development tools and configures sudo access
-   - No user-specific configuration needed
+### Build Time
 
-2. **Runtime** (when container starts):
-   - Entrypoint script receives your host UID/GID via environment variables
-   - Remaps the `ubuntu` user to match your host user's UID/GID
-   - Fixes ownership on home directory and workspace
-   - Drops privileges and runs as remapped user
+The container image uses Ubuntu 24.04's default `ubuntu` user (UID/GID 1000). Development tools and sudo privileges are configured during image build. No user-specific configuration is required at this stage.
 
-3. **Result**: 
-   - All files created have correct ownership on your host system
-   - Same image works for all users without rebuilding
+### Runtime
+
+When the container starts:
+
+1. The entrypoint script receives host UID/GID values via environment variables
+2. The `ubuntu` user is remapped to match the host user's UID/GID
+3. Home directory and workspace ownership are updated
+4. Execution proceeds as the remapped user
+
+### Result
+
+Files created within the container maintain correct ownership on the host filesystem. A single container image supports multiple users without rebuilding.
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│ Docker Container                                        │
-│                                                         │
-│  Container Start (as root)                              │
-│         ↓                                               │
-│  entrypoint.sh receives HOST_UID/HOST_GID               │
-│         ↓                                               │
-│  Remaps ubuntu user: 1000 → your UID (e.g., 1001)       │
-│         ↓                                               │
-│  Drops to ubuntu user and runs command                  │
-│         ↓                                               │
-│  VS Code connects as: ubuntu (with your UID/GID)        │
-└─────────────────────────────────────────────────────────┘
+Container Lifecycle:
+
+1. Container starts as root
+2. entrypoint.sh receives HOST_UID/HOST_GID
+3. ubuntu user remapped (1000 → host UID)
+4. Ownership updated on home directory and workspace
+5. Execution switches to remapped ubuntu user
+6. VS Code connects as ubuntu (with host UID/GID)
 ```
 
-## Benefits
+## Advantages
 
-✅ **Simple** - Leverages Ubuntu 24.04's existing user (no custom user creation)  
-✅ **Portable** - Same image works for all users regardless of their UID/GID  
-✅ **Fast** - Minimal remapping operations, quick startup  
-✅ **No rebuilds** - User changes don't require image rebuilds  
-✅ **Team-friendly** - Share pre-built images via Docker registry  
-✅ **CI/CD ready** - Works in any environment (local, cloud, CI pipelines)  
-✅ **No conflicts** - Modifies existing user instead of creating conflicts  
+- **Portability**: Single image supports multiple users with different UID/GID values
+- **No Rebuilds**: User changes do not require image reconstruction
+- **Performance**: Minimal overhead during container initialization
+- **Distribution**: Pre-built images can be shared via container registry
+- **CI/CD Integration**: Functions consistently across local, cloud, and pipeline environments
+- **Conflict Avoidance**: Modifies existing user rather than creating new user entries  
 
-## Files
+## Configuration Files
 
 ### `.devcontainer/devcontainer.json`
-VS Code DevContainer configuration:
-- `containerUser: "root"` - Container starts as root (needed for remapping)
-- `remoteUser: "ubuntu"` - VS Code connects as ubuntu user (after remapping)
-- `containerEnv` - Passes `HOST_UID` and `HOST_GID` to entrypoint
-- `initializeCommand` - Builds image before starting container
+
+Primary DevContainer configuration file:
+
+- `containerUser: "root"` - Initial container user (required for UID/GID remapping)
+- `remoteUser: "ubuntu"` - User context for VS Code connection (post-remapping)
+- `containerEnv` - Environment variables passing host UID/GID to entrypoint
+- `initializeCommand` - Pre-startup image build command
 
 ### `scripts/entrypoint.sh`
-Runtime UID/GID remapping script (26 lines):
-- Receives HOST_UID and HOST_GID from environment
-- Remaps ubuntu user/group to match host
-- Fixes ownership on home directory and workspace
-- Executes command as remapped user
+
+Runtime remapping script:
+
+- Reads `HOST_UID` and `HOST_GID` from environment
+- Modifies ubuntu user/group to match host values
+- Updates file ownership on home directory and workspace
+- Executes container command as remapped user
 
 ### `Dockerfile`
-Base image configuration:
-- Installs C++ development tools
-- Configures existing ubuntu user with sudo access
-- Sets up colored bash prompt and aliases
-- Copies and sets up entrypoint script
+
+Container image definition:
+
+- Base image: Ubuntu 24.04
+- Development toolchain installation
+- sudo configuration for ubuntu user
+- Entrypoint script integration
 
 ## Usage
 
-### Using VS Code DevContainer (Recommended)
+### VS Code DevContainer
 
-1. Open project in VS Code
-2. Command Palette → "Dev Containers: Reopen in Container"
-3. VS Code automatically:
-   - Builds the image (if needed)
-   - Starts container with your UID/GID
-   - Connects you as ubuntu user with correct permissions
+1. Open project directory in VS Code
+2. Execute command: "Dev Containers: Reopen in Container"
+3. VS Code performs the following operations:
+   - Builds container image if not present
+   - Starts container with host UID/GID environment variables
+   - Establishes connection as ubuntu user with remapped credentials
 
-### Using Scripts Manually
+### Manual Container Operations
 
-**Build the image:**
+Build the container image:
 ```bash
-./scripts/build_image.sh
+./scripts/docker/build_image.sh
 ```
 
-**Run interactive container:**
+Start interactive container session:
 ```bash
 ./scripts/run.sh
 ```
 
-**Check your identity inside container:**
+Verify identity remapping:
 ```bash
 docker run --rm \
   --env "HOST_UID=$(id -u)" \
@@ -105,105 +107,113 @@ docker run --rm \
   cpp-dev:latest id
 ```
 
-### Example: Different Users, Same Image
+### Multi-User Scenario
+
+The same container image supports different user contexts:
 
 ```bash
-# User 1 (UID 1000):
+# Developer A (UID 1000)
 HOST_UID=1000 HOST_GID=1000 → ubuntu remapped to 1000:1000
 
-# User 2 (UID 1001):
+# Developer B (UID 1001)
 HOST_UID=1001 HOST_GID=1001 → ubuntu remapped to 1001:1001
 
-# CI system (UID 5000):
+# CI Environment (UID 5000)
 HOST_UID=5000 HOST_GID=5000 → ubuntu remapped to 5000:5000
 ```
 
-All using the **same Docker image** - no rebuilds needed!
+No image rebuilds required for different user contexts.
 
-## Testing
+## Verification
 
-### Verify UID/GID Remapping
+### UID/GID Remapping
 
+Execute within container:
 ```bash
-# Inside container, check your identity
 id
-# Expected: uid=1000(ubuntu) gid=1000(ubuntu) (or your actual UID/GID)
 ```
 
-### Verify File Ownership
+Expected output: `uid=<host_uid>(ubuntu) gid=<host_gid>(ubuntu)`
 
+### File Ownership
+
+Create test file within container:
 ```bash
-# Inside container
 touch /workspaces/cpp-project-template/test_file
 ls -la /workspaces/cpp-project-template/test_file
-# Expected: owned by ubuntu inside container
-
-# On host
-ls -la test_file
-# Expected: owned by your host user (e.g., jcastillo)
 ```
 
-### Test with Different UID
+Expected: File owned by ubuntu user in container
+
+Verify on host:
+```bash
+ls -la test_file
+```
+
+Expected: File owned by host user
+
+### Custom UID Test
 
 ```bash
 docker run --rm \
   --env "HOST_UID=5555" \
   --env "HOST_GID=5555" \
   cpp-dev:latest id
-# Expected: uid=5555(ubuntu) gid=5555(ubuntu)
 ```
+
+Expected output: `uid=5555(ubuntu) gid=5555(ubuntu)`
 
 ## Troubleshooting
 
-### Files have wrong ownership on host
+### Incorrect File Ownership
 
-**Symptom**: Files created in container are owned by root or wrong user on host
+**Symptom**: Files created in container have incorrect ownership on host
 
-**Solution**: Ensure HOST_UID and HOST_GID are being passed correctly:
-```bash
-# Check environment variables in devcontainer.json
+**Diagnosis**: Verify environment variable configuration in `.devcontainer/devcontainer.json`:
+
+```json
 "containerEnv": {
   "HOST_UID": "${localEnv:UID}",
   "HOST_GID": "${localEnv:GID}"
 }
 ```
 
-### VS Code can't connect to container
+### DevContainer Connection Failure
 
-**Symptom**: DevContainer fails to start or VS Code can't connect
+**Symptom**: Container fails to start or VS Code cannot establish connection
 
-**Solution**: 
-1. Check that `remoteUser: "ubuntu"` is set in devcontainer.json
-2. Check container logs: `docker logs cpp-dev-$(whoami)`
-3. Verify entrypoint script is executable: `chmod +x scripts/entrypoint.sh`
+**Resolution**:
+1. Verify `remoteUser: "ubuntu"` in devcontainer.json
+2. Inspect container logs: `docker logs cpp-dev-$(whoami)`
+3. Confirm entrypoint script permissions: `chmod +x scripts/entrypoint.sh`
 
-### Permission denied errors inside container
+### Permission Errors
 
-**Symptom**: Cannot write files or access directories
+**Symptom**: Write operations fail within container
 
-**Solution**:
-1. Verify entrypoint ran successfully (check for "Setup complete" message)
-2. Check workspace ownership: `ls -la /workspaces`
-3. Rebuild image: `./scripts/build_image.sh`
+**Resolution**:
+1. Verify entrypoint script execution completed successfully
+2. Inspect workspace ownership: `ls -la /workspaces`
+3. Rebuild container image: `./scripts/docker/build_image.sh`
 
-### Container starts but user is still UID 1000
+### UID Remains at Default Value
 
-**Symptom**: Inside container, `id` shows UID 1000 when you expected different
+**Symptom**: Container user displays UID 1000 regardless of host UID
 
-**Solution**: Your host UID is probably 1000 (very common). The remapping worked correctly - ubuntu user already had UID 1000 so no change was needed.
+**Explanation**: If host UID is 1000, no remapping is necessary. The ubuntu user's default UID matches the host, so the remapping operation is a no-op.
 
 ## Advanced Configuration
 
-### Custom GPU Support
+### GPU Access
 
-Already configured in `runArgs`:
+GPU support is configured via `runArgs`:
 ```json
 "runArgs": ["--gpus", "all"]
 ```
 
 ### X11 Display Forwarding
 
-Already configured for GUI applications:
+GUI application support is enabled through:
 ```json
 "runArgs": [
   "--env", "DISPLAY=${localEnv:DISPLAY}",
@@ -211,9 +221,9 @@ Already configured for GUI applications:
 ]
 ```
 
-### Debug Tools (Optional)
+### Debugging Capabilities
 
-Uncomment in devcontainer.json if needed:
+For debugging operations requiring ptrace, uncomment in devcontainer.json:
 ```json
 "runArgs": [
   "--cap-add=SYS_PTRACE",
@@ -223,76 +233,77 @@ Uncomment in devcontainer.json if needed:
 
 ## Ubuntu 22.04 Compatibility
 
-This setup is designed for **Ubuntu 24.04**, which includes a built-in `ubuntu` user. If you need **Ubuntu 22.04** support:
+This configuration targets Ubuntu 24.04, which includes a pre-configured `ubuntu` user. For Ubuntu 22.04 support, user creation must be added to the Dockerfile.
 
-**The Issue:** Ubuntu 22.04 base image does not include an `ubuntu` user.
-
-**Solution:** Add user creation to the Dockerfile:
+Ubuntu 22.04 does not include an `ubuntu` user by default. Add the following to the Dockerfile:
 
 ```dockerfile
 FROM ubuntu:22.04
 
-# Install packages...
-
-# Create ubuntu user (doesn't exist in 22.04)
+# Create ubuntu user
 RUN groupadd --gid 1000 ubuntu \
     && useradd --uid 1000 --gid 1000 -m -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
-
-# Rest of Dockerfile stays the same...
 ```
 
-**No changes needed** to entrypoint or devcontainer.json - they work identically!
+The entrypoint script and devcontainer.json require no modifications.
 
-**Universal Approach** (supports both 22.04 and 24.04):
+### Cross-Version Compatibility
+
+For a Dockerfile supporting both Ubuntu 22.04 and 24.04:
+
 ```dockerfile
-# Create ubuntu user if it doesn't exist
 RUN getent group ubuntu || groupadd --gid 1000 ubuntu \
     && id ubuntu || useradd --uid 1000 --gid 1000 -m -s /bin/bash ubuntu \
     && echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
 ```
 
-The `|| true` makes it work for both versions - creates user on 22.04, fails silently on 24.04.
+This approach creates the user on 22.04 and exits gracefully on 24.04 where the user already exists.
 
-## Comparison with Other Approaches
+## Alternative Approaches
 
-### Build-time UID/GID (Previous Approach)
+### Build-Time UID/GID Configuration
+
 ```dockerfile
 ARG USER_ID=1000
 RUN useradd -u $USER_ID ...
 ```
-- ❌ Image tied to specific user
-- ❌ Requires rebuild for different users
-- ❌ Not portable across teams
-- ✅ Simple, no entrypoint needed
 
-### Runtime Remapping (Current Approach)
+Characteristics:
+- Image specific to individual user
+- Requires rebuild for different users
+- Limited portability across development teams
+- Simpler implementation without runtime entrypoint
+
+### Runtime UID/GID Remapping (Current Implementation)
+
 ```bash
-# Entrypoint remaps at startup
 usermod -u $HOST_UID ubuntu
 ```
-- ✅ One image for all users
-- ✅ No rebuilds needed
-- ✅ Portable and shareable
-- ⚠️ Slightly more complex entrypoint
 
-### Why Runtime Remapping Wins
+Characteristics:
+- Single image supports multiple users
+- No rebuild required for user changes
+- Portable across teams and environments
+- Additional complexity in entrypoint script
 
-For a **project template** like this, portability is key. Users should be able to clone and use immediately without configuring build arguments or rebuilding images. The small complexity cost in the entrypoint is worth the massive gain in portability and user experience.
+### Rationale
+
+For a multi-user project template, portability and ease of use are prioritized over implementation simplicity. Runtime remapping enables immediate use after repository cloning without build configuration or image rebuilds.
 
 ## References
 
 - [VS Code DevContainer Specification](https://containers.dev/)
 - [Docker User Namespaces](https://docs.docker.com/engine/security/userns-remap/)
-- [Linux UID/GID Overview](https://www.linux.com/training-tutorials/understanding-linux-file-permissions/)
+- [Linux File Permissions](https://www.linux.com/training-tutorials/understanding-linux-file-permissions/)
 
-## Contributing
+## Modification Guidelines
 
-When modifying the DevContainer setup:
+When updating the DevContainer configuration:
 
-1. Test with different UIDs: `docker run --env HOST_UID=5000 ...`
-2. Verify file ownership on host after creating files in container
-3. Test VS Code connection: Reopen in Container
-4. Update this documentation if behavior changes
+1. Test with multiple UID values
+2. Verify file ownership consistency between container and host
+3. Confirm VS Code connectivity
+4. Update documentation to reflect behavioral changes

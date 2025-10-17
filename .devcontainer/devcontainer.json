@@ -3,7 +3,7 @@
   "image": "cpp-dev:latest",
 
   // Build image before starting container
-  "initializeCommand": "bash ${localWorkspaceFolder}/scripts/build_image.sh",
+  "initializeCommand": "bash ${localWorkspaceFolder}/scripts/docker/build_image.sh",
 
   // Pass host UID/GID to container for runtime remapping
   "containerEnv": {
@@ -15,6 +15,10 @@
   "containerUser": "root",
   // VS Code will connect as ubuntu user (with remapped UID/GID)
   "remoteUser": "ubuntu",
+
+  // IMPORTANT: Prevent VS Code from creating a derived "vsc-...-uid" image
+  // We handle UID/GID remapping at runtime via our ENTRYPOINT script
+  "updateRemoteUserUID": false,
 
   "customizations": {
     "vscode": {

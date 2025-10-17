@@ -1,54 +1,58 @@
-# PUBLIC vs PRIVATE Include Directories
+# CMake Include Directory Visibility
 
-This guide explains CMake's `PUBLIC` and `PRIVATE` visibility for include directories, demonstrated by the `example_public_private` module.
+This guide explains CMake's PUBLIC and PRIVATE visibility modifiers for include directories, as demonstrated in the `example_public_private` module.
 
 ## Directory Structure
 
 ```
 example_public_private/
-├── include/                          # PUBLIC headers (API)
-│   └── example_public_private.hpp   # ✅ Can be included by consumers
-└── src/                              # PRIVATE headers (implementation)
-    ├── private_example.hpp           # ❌ Cannot be included by consumers
+├── include/
+│   └── example_public_private.hpp   # Public API header
+└── src/
+    ├── private_example.hpp           # Internal implementation header
     ├── private_example.cpp
     └── example_public_private.cpp
 ```
 
-## The Concept
+## Visibility Concepts
 
 ### PUBLIC Include Directories
-Headers in `include/` are **part of your library's public API**:
+
+Headers in `include/` constitute the library's public API and are accessible to consuming targets:
+
 ```cpp
 // main.cpp (consumer code)
-#include "example_public_private.hpp"  // ✅ Works! PUBLIC header
+#include "example_public_private.hpp"  // Accessible
 ```
 
-### PRIVATE Include Directories  
-Headers in `src/` are **internal implementation details**:
+### PRIVATE Include Directories
+
+Headers in `src/` are implementation details and not accessible to consuming targets:
+
 ```cpp
 // main.cpp (consumer code)
-#include "private_example.hpp"  // ❌ Compile error! PRIVATE header
+#include "private_example.hpp"  // Compilation error
 ```
 
-## CMakeLists.txt Configuration
+## CMake Configuration
 
 ```cmake
 target_include_directories(example_public_private
-    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include   # API headers
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src      # Internal headers
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include   # Public API headers
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src      # Implementation headers
 )
 ```
 
-## Why This Matters
+## Design Rationale
 
 1. **Encapsulation**: Enforces separation between interface and implementation
-2. **Dependency Management**: Consumers only get access to what they need
-3. **Faster Recompilation**: Changes to PRIVATE headers don't trigger rebuilds of dependent targets
-4. **Clear API Boundaries**: Makes it obvious what's part of your public API
+2. **Dependency Management**: Consumers access only required components
+3. **Build Optimization**: Modifications to PRIVATE headers do not trigger dependent target rebuilds
+4. **API Clarity**: Explicitly defines public interface boundaries
 
-## How It Works
+## Dependency Propagation
 
-When you use `target_link_libraries` to link against a library:
+When linking against a library using `target_link_libraries`:
 
 ```cmake
 # In main/CMakeLists.txt
@@ -57,86 +61,94 @@ target_link_libraries(main_exec
 )
 ```
 
-The compiler automatically gets access to:
-- ✅ **PUBLIC** include directories from `example_public_private`
-- ❌ **PRIVATE** include directories are NOT passed through
+The compiler receives:
+- PUBLIC include directories from `example_public_private`
+- PRIVATE include directories are not propagated
 
-## Example Usage
+## Usage Examples
 
-### Inside the Library
+### Within the Library
+
 ```cpp
 // In src/example_public_private.cpp
-#include "example_public_private.hpp"  // ✅ Works (PUBLIC)
-#include "private_example.hpp"         // ✅ Works (PRIVATE - same target)
+#include "example_public_private.hpp"  // Accessible (PUBLIC)
+#include "private_example.hpp"         // Accessible (PRIVATE - same target)
 ```
 
 ### In Consumer Code
+
 ```cpp
 // In src/main/main.cpp
-#include "example_public_private.hpp"  // ✅ Works (PUBLIC)
-#include "private_example.hpp"         // ❌ Compiler cannot find this!
+#include "example_public_private.hpp"  // Accessible (PUBLIC)
+#include "private_example.hpp"         // Not accessible - compilation error
 ```
 
-## Visibility Scopes Explained
+## Visibility Scope Reference
 
-CMake has three visibility levels:
+CMake supports three visibility levels:
 
 ### PRIVATE
-- Only visible to the target itself
-- Not propagated to consumers
-- Use for: Implementation details, internal headers
+
+- Visible only to the defining target
+- Not propagated to dependent targets
+- Use case: Implementation details, internal headers
 
 ### PUBLIC
-- Visible to the target AND all consumers
-- Fully propagated through the dependency chain
-- Use for: Public API headers, required dependencies
+
+- Visible to the defining target and all dependent targets
+- Fully propagated through dependency chain
+- Use case: Public API headers, required dependencies
 
 ### INTERFACE
-- NOT visible to the target itself
-- Only visible to consumers
-- Use for: Header-only libraries, transitive dependencies
 
-## Visual Example
+- Not visible to the defining target
+- Visible only to dependent targets
+- Use case: Header-only libraries, transitive dependencies
+
+## Propagation Model
 
 ```
 Target A (library)          Target B (executable)
-├─ PUBLIC includes     →    ✅ B can see these
-├─ PRIVATE includes    →    ❌ B cannot see these
-└─ INTERFACE includes  →    ✅ B can see these (but A cannot!)
+├─ PUBLIC includes     →    Visible to B
+├─ PRIVATE includes    →    Not visible to B
+└─ INTERFACE includes  →    Visible to B (not visible to A)
 ```
 
-## Try It Yourself
+## Verification
 
-To see the difference in action, try adding this to `src/main/main.cpp`:
+To demonstrate visibility enforcement, attempt to include a private header in `src/main/main.cpp`:
 
 ```cpp
-#include "private_example.hpp"  // This will fail to compile!
+#include "private_example.hpp"
 ```
 
-You'll get an error like:
+Expected compilation error:
 ```
 fatal error: private_example.hpp: No such file or directory
 ```
 
-This is **intentional** - it proves that PRIVATE headers are truly private!
+This confirms that PRIVATE headers are correctly isolated from consuming targets.
 
 ## Best Practices
 
-### ✅ Do
-- Put your public API in `include/` with PUBLIC visibility
-- Put implementation details in `src/` with PRIVATE visibility
-- Use PUBLIC for dependencies that appear in your public headers
-- Use PRIVATE for dependencies only used in .cpp files
+### Recommended Practices
 
-### ❌ Don't
-- Make everything PUBLIC "just to be safe"
-- Put private headers in the same directory as public ones
-- Use PUBLIC for implementation-only dependencies
-- Expose internal implementation details in public headers
+- Place public API in `include/` with PUBLIC visibility
+- Place implementation details in `src/` with PRIVATE visibility
+- Use PUBLIC for dependencies referenced in public headers
+- Use PRIVATE for dependencies used exclusively in implementation files
 
-## Common Patterns
+### Practices to Avoid
 
-### Pattern 1: Library with Public API
+- Marking all include directories as PUBLIC without justification
+- Mixing private and public headers in the same directory
+- Using PUBLIC for implementation-only dependencies
+- Exposing internal implementation details through public headers
+
+## Implementation Patterns
+
+### Pattern 1: Standard Library with Public API
+
 ```cmake
 add_library(mylib
     src/mylib.cpp
@@ -144,12 +156,13 @@ add_library(mylib
 )
 
 target_include_directories(mylib
-    PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include  # Public API
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src      # Implementation
+    PUBLIC  ${CMAKE_CURRENT_SOURCE_DIR}/include
+    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 ```
 
 ### Pattern 2: Header-Only Library
+
 ```cmake
 add_library(mylib INTERFACE)
 
@@ -159,63 +172,68 @@ target_include_directories(mylib
 ```
 
 ### Pattern 3: Library with Public Dependencies
+
 ```cmake
 target_link_libraries(mylib
-    PUBLIC  nlohmann_json    # Appears in public headers
-    PRIVATE sqlite3          # Only used in .cpp files
+    PUBLIC  nlohmann_json    # Required by public headers
+    PRIVATE sqlite3          # Used only in implementation
 )
 ```
 
-## Debugging Visibility Issues
+## Diagnostics
 
-### Check what includes are propagated:
+### Inspecting Include Directories
+
 ```bash
-# Show the include directories for a target
 cmake --build build --target help
 cmake --build build --target mylib -- VERBOSE=1
 ```
 
-### Common error messages:
-```cpp
-// If you see this:
-fatal error: some_header.hpp: No such file or directory
+### Common Error Messages
 
-// Possible causes:
-// 1. Header is PRIVATE but you're trying to use it from another target
-// 2. Missing target_include_directories
-// 3. Wrong visibility level (should be PUBLIC)
+```
+fatal error: some_header.hpp: No such file or directory
 ```
 
-## Real-World Example
+Potential causes:
+- Header is PRIVATE but referenced from dependent target
+- Missing `target_include_directories` directive
+- Incorrect visibility level specification
 
-A typical library structure:
+## Installation Configuration
+
+Standard library structure with install support:
 
 ```
 mylib/
-├── include/mylib/           # PUBLIC API
-│   ├── mylib.hpp           # Main public header
-│   └── types.hpp           # Public type definitions
-├── src/                     # PRIVATE implementation
-│   ├── mylib.cpp           # Implementation
-│   ├── internal.hpp        # Private helpers
-│   └── internal.cpp        # Private implementation
+├── include/mylib/
+│   ├── mylib.hpp
+│   └── types.hpp
+├── src/
+│   ├── mylib.cpp
+│   ├── internal.hpp
+│   └── internal.cpp
 └── CMakeLists.txt
+```
 
 CMakeLists.txt:
+```cmake
 target_include_directories(mylib
-    PUBLIC  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-            $<INSTALL_INTERFACE:include>
-    PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 ```
 
-This ensures:
-- Consumers can `#include <mylib/mylib.hpp>`
-- Consumers cannot see `internal.hpp`
-- Works both in-tree and after installation
+This configuration ensures:
+- Consumers can include `<mylib/mylib.hpp>`
+- `internal.hpp` remains inaccessible to consumers
+- Correct behavior in both build tree and post-installation
 
-## Further Reading
+## References
 
-- [CMake target_include_directories documentation](https://cmake.org/cmake/help/latest/command/target_include_directories.html)
-- [CMake target_link_libraries documentation](https://cmake.org/cmake/help/latest/command/target_link_libraries.html)
+- [CMake target_include_directories](https://cmake.org/cmake/help/latest/command/target_include_directories.html)
+- [CMake target_link_libraries](https://cmake.org/cmake/help/latest/command/target_link_libraries.html)
 - [Effective Modern CMake](https://gist.github.com/mbinna/c61dbb39bca0e4fb7d1f73b0d66a4fd1)
