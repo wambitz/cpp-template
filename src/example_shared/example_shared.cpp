@@ -1,4 +1,5 @@
 #include "example_shared.hpp"
+
 #include <iostream>
 
 void example_shared_function() {
