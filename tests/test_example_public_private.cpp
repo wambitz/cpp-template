@@ -1,23 +1,20 @@
 #include <gtest/gtest.h>
+
 #include "example_public_private.hpp"
 #include "test_helpers.hpp"
 
-class ExamplePublicPrivateTest : public ::testing::Test
-{
-   protected:
-    void SetUp() override
-    {
+class ExamplePublicPrivateTest : public ::testing::Test {
+protected:
+    void SetUp() override {
         // Setup code if needed
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Cleanup code if needed
     }
 };
 
-TEST_F(ExamplePublicPrivateTest, PublicFunctionExecutes)
-{
+TEST_F(ExamplePublicPrivateTest, PublicFunctionExecutes) {
     OutputCapture capture;
     EXPECT_NO_THROW(example_public());
     std::string output = capture.getOutput();
@@ -25,8 +22,7 @@ TEST_F(ExamplePublicPrivateTest, PublicFunctionExecutes)
     EXPECT_NE(output.find("Public function"), std::string::npos);
 }
 
-TEST_F(ExamplePublicPrivateTest, PublicFunctionCallsPrivateFunction)
-{
+TEST_F(ExamplePublicPrivateTest, PublicFunctionCallsPrivateFunction) {
     OutputCapture capture;
     example_public();
     std::string output = capture.getOutput();
@@ -36,8 +32,7 @@ TEST_F(ExamplePublicPrivateTest, PublicFunctionCallsPrivateFunction)
     EXPECT_NE(output.find("Private function example!"), std::string::npos);
 }
 
-TEST_F(ExamplePublicPrivateTest, OutputFormatIsCorrect)
-{
+TEST_F(ExamplePublicPrivateTest, OutputFormatIsCorrect) {
     OutputCapture capture;
     example_public();
     std::string output = capture.getOutput();

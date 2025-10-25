@@ -1,6 +1,8 @@
 #include "example_public_private.hpp"
-#include "private_example.hpp"
+
 #include <iostream>
+
+#include "private_example.hpp"
 
 void example_public() {
     std::cout << "Public function example!\n";

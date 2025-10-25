@@ -1,23 +1,20 @@
 #include <gtest/gtest.h>
+
 #include "example_static.hpp"
 #include "test_helpers.hpp"
 
-class ExampleStaticTest : public ::testing::Test
-{
-   protected:
-    void SetUp() override
-    {
+class ExampleStaticTest : public ::testing::Test {
+protected:
+    void SetUp() override {
         // Setup code if needed
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Cleanup code if needed
     }
 };
 
-TEST_F(ExampleStaticTest, FunctionExecutes)
-{
+TEST_F(ExampleStaticTest, FunctionExecutes) {
     OutputCapture capture;
     EXPECT_NO_THROW(example_static_function());
     std::string output = capture.getOutput();
@@ -25,8 +22,7 @@ TEST_F(ExampleStaticTest, FunctionExecutes)
     EXPECT_NE(output.find("Static library"), std::string::npos);
 }
 
-TEST_F(ExampleStaticTest, OutputContainsExpectedString)
-{
+TEST_F(ExampleStaticTest, OutputContainsExpectedString) {
     OutputCapture capture;
     example_static_function();
     std::string output = capture.getOutput();
@@ -35,8 +31,7 @@ TEST_F(ExampleStaticTest, OutputContainsExpectedString)
     EXPECT_NE(output.find("Static library example!"), std::string::npos);
 }
 
-TEST_F(ExampleStaticTest, FunctionCanBeCalledMultipleTimes)
-{
+TEST_F(ExampleStaticTest, FunctionCanBeCalledMultipleTimes) {
     OutputCapture capture;
 
     // Call the function multiple times

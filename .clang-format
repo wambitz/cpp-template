@@ -5,39 +5,43 @@ Standard: c++17
 IndentWidth: 4
 TabWidth: 4
 UseTab: Never
-
-# Braces and layout
-BreakBeforeBraces: Allman
-AllowShortIfStatementsOnASingleLine: false
-AllowShortLoopsOnASingleLine: false
-AllowShortFunctionsOnASingleLine: Inline
+ContinuationIndentWidth: 4
 
 # Line length
 ColumnLimit: 100
 PenaltyBreakComment: 300
 PenaltyReturnTypeOnItsOwnLine: 100
+AccessModifierOffset: -4
 
-# Namespaces
-# IndentNamespace: None
+# Braces and layout
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
 
-# Includes
-SortIncludes: true
-IncludeBlocks: Preserve
-IncludeCategories:
-  - Regex: '^<.*\.h>'
-    Priority: 1
-  - Regex: '^"'
-    Priority: 2
-  - Regex: '.*'
-    Priority: 3
-
-# Pointers / references
-PointerAlignment: Left
+# Pointer and reference alignment
+DerivePointerAlignment: false      # Don't derive from existing code, enforce our style
+PointerAlignment: Left             # int* ptr (not int *ptr)
+ReferenceAlignment: Left           # int& ref (not int &ref)
 SpaceBeforeParens: ControlStatements
 SpaceAfterCStyleCast: true
 
+# Constructor initializer list formatting
+BreakConstructorInitializers: BeforeComma
+ConstructorInitializerIndentWidth: 4
+PackConstructorInitializers: Never
+
+# Function parameter formatting
+BinPackParameters: true            # Pack parameters in declarations/definitions
+BinPackArguments: false            # Each argument on its own line in CALLS
+AllowAllParametersOfDeclarationOnNextLine: true
+AlignAfterOpenBracket: AlwaysBreak # Always break after open bracket
+
+# Initializer list formatting
+Cpp11BracedListStyle: true         # Use C++11 braced list style
+
+# Lambda formatting
+AllowShortLambdasOnASingleLine: None      # Keep short lambdas on one line
+LambdaBodyIndentation: OuterScope         # Align lambda body with signature
+
 # Comments
 ReflowComments: true
-
-# Explicitly disable GNU extensions
-DerivePointerAlignment: false

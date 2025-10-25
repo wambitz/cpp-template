@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+
 #include "test_helpers.hpp"
 
 // Include all library headers for integration testing
@@ -7,22 +8,18 @@
 #include "example_shared.hpp"
 #include "example_static.hpp"
 
-class IntegrationTest : public ::testing::Test
-{
-   protected:
-    void SetUp() override
-    {
+class IntegrationTest : public ::testing::Test {
+protected:
+    void SetUp() override {
         // Setup code if needed
     }
 
-    void TearDown() override
-    {
+    void TearDown() override {
         // Cleanup code if needed
     }
 };
 
-TEST_F(IntegrationTest, AllFunctionsTogether)
-{
+TEST_F(IntegrationTest, AllFunctionsTogether) {
     OutputCapture capture;
 
     EXPECT_NO_THROW({
@@ -41,8 +38,7 @@ TEST_F(IntegrationTest, AllFunctionsTogether)
     EXPECT_NE(output.find("Public function"), std::string::npos);
 }
 
-TEST_F(IntegrationTest, LibrariesWorkIndependently)
-{
+TEST_F(IntegrationTest, LibrariesWorkIndependently) {
     // Test that each library works independently without interference
 
     // Test static library
@@ -73,8 +69,7 @@ TEST_F(IntegrationTest, LibrariesWorkIndependently)
     EXPECT_NO_THROW(example_interface());
 }
 
-TEST_F(IntegrationTest, CrossLibraryDependencies)
-{
+TEST_F(IntegrationTest, CrossLibraryDependencies) {
     // Test that example_public_private correctly uses its private dependency
     OutputCapture capture;
 
@@ -87,8 +82,7 @@ TEST_F(IntegrationTest, CrossLibraryDependencies)
     EXPECT_NE(output.find("Private function example!"), std::string::npos);
 }
 
-TEST_F(IntegrationTest, FullApplicationWorkflow)
-{
+TEST_F(IntegrationTest, FullApplicationWorkflow) {
     // Simulate the main application workflow
     OutputCapture capture;
 
@@ -104,14 +98,12 @@ TEST_F(IntegrationTest, FullApplicationWorkflow)
 
     // Verify all expected components are present
     std::vector<std::string> expected_outputs = {
-        "Static library example!", 
-        "Shared library example!", 
+        "Static library example!",
+        "Shared library example!",
         "Public function example!",
-        "Private function example!"
-    };
+        "Private function example!"};
 
-    for (const auto& expected : expected_outputs)
-    {
+    for (const auto& expected : expected_outputs) {
         EXPECT_NE(output.find(expected), std::string::npos)
             << "Missing expected output: " << expected;
     }
