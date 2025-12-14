@@ -8,12 +8,18 @@
 // Helper class to capture stdout
 class OutputCapture {
 public:
-    OutputCapture() {
-        old_cout = std::cout.rdbuf();
+    OutputCapture()
+        : old_cout(std::cout.rdbuf()) {
         std::cout.rdbuf(captured_output.rdbuf());
     }
 
     ~OutputCapture() { std::cout.rdbuf(old_cout); }
+
+    // Delete copy and move operations (RAII resource management)
+    OutputCapture(const OutputCapture&) = delete;
+    OutputCapture& operator=(const OutputCapture&) = delete;
+    OutputCapture(OutputCapture&&) = delete;
+    OutputCapture& operator=(OutputCapture&&) = delete;
 
     std::string getOutput() { return captured_output.str(); }
 

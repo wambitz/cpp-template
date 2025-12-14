@@ -17,7 +17,7 @@ int main(int argc, char** argv) {
     // dlopen() uses RPATH to find plugin automatically - no hardcoded paths!
     const std::string plugin_name = "libexample_plugin_impl.so";
 
-    std::cout << "Loading plugin: " << plugin_name << std::endl;
+    std::cout << "Loading plugin: " << plugin_name << '\n';
     load_plugin(plugin_name.c_str());
 
     std::cout << "Main application finished.\n";

@@ -58,7 +58,7 @@ TEST_F(PluginLoaderTest, ValidPluginPath) {
     if (!found_valid_path) {
         std::cout
             << "Note: Plugin not found at expected paths, but load_plugin executed without crashing"
-            << std::endl;
+            << '\n';
     }
 }
 
