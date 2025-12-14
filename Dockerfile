@@ -33,7 +33,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # ------------------------------------------------------------------------------
-# Configure the existing 'ubuntu' user (UID/GID will be remapped at runtime)
+# Create 'ubuntu' user if it doesn't exist (for Ubuntu 22.04 compatibility)
+# ------------------------------------------------------------------------------
+RUN if ! id -u ubuntu > /dev/null 2>&1; then \
+        useradd -m -s /bin/bash -u 1000 ubuntu; \
+    fi
+
+# ------------------------------------------------------------------------------
+# Configure the 'ubuntu' user (UID/GID will be remapped at runtime)
 # ------------------------------------------------------------------------------
 RUN echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
