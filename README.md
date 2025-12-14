@@ -18,6 +18,10 @@ A modern, production-ready template for C++ development.
 
 ```bash
 git clone <your-fork> my_project && cd my_project
+
+# Install pre-commit hooks (for code quality checks on push)
+pre-commit install --hook-type pre-push
+
 ./scripts/fetch_googletest.sh        # optional, only if you need tests
 cmake -S . -B build                  # -DENABLE_TESTS=OFF to skip tests
 cmake --build build -j$(nproc)
