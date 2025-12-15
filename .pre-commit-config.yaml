@@ -3,7 +3,7 @@ repos:
     hooks:
       - id: clang-format
         name: clang-format
-        entry: ./scripts/format.sh
+        entry: ./scripts/format.sh --check
         language: system
         stages: [pre-push]
         pass_filenames: false
