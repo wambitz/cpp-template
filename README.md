@@ -4,7 +4,7 @@ A modern, production-ready template for C++ development.
 
 | Capability      | Tool / Setup                           | Status |
 | --------------- | -------------------------------------- | ------ |
-| Build           | CMake ≥ 3.16                           | ✔      |
+| Build           | CMake ≥ 3.20                           | ✔      |
 | Unit tests      | GoogleTest (optional)                  | ✔      |
 | Formatting      | clang-format (pre-commit)              | ✔      |
 | Linting         | clang-tidy (pre-commit)                | ✔      |
@@ -22,10 +22,9 @@ git clone <your-fork> my_project && cd my_project
 # Install pre-commit hooks (for code quality checks on push)
 pre-commit install --hook-type pre-push
 
-./scripts/fetch_googletest.sh        # optional, only if you need tests
-cmake -S . -B build                  # -DENABLE_TESTS=OFF to skip tests
+cmake -S . -B build                  # -DENABLE_UNIT_TESTS=OFF to skip tests
 cmake --build build -j$(nproc)
-./build/main_exec
+./build/bin/main_exec
 ctest --test-dir build --output-on-failure   # if tests enabled
 ```
 
@@ -106,13 +105,14 @@ your-package/
 
 ### Build and Development
 
-| Script       | Purpose                                              |
-| ------------ | ---------------------------------------------------- |
-| `build.sh`   | Configure and compile (Debug mode)                   |
-| `package.sh` | Build and create distributable packages (Release)    |
-| `format.sh`  | Run clang-format on sources                          |
-| `lint.sh`    | Run clang-tidy using compile commands                |
-| `docs.sh`    | Generate HTML docs                                   |
+| Script        | Purpose                                              |
+| ------------- | ---------------------------------------------------- |
+| `build.sh`    | Configure and compile (Debug mode)                   |
+| `package.sh`  | Build and create distributable packages (Release)    |
+| `coverage.sh` | Build with coverage, run tests, generate report      |
+| `format.sh`   | Run clang-format on sources (use --check for CI)     |
+| `lint.sh`     | Run clang-tidy using compile commands                |
+| `docs.sh`     | Generate HTML docs                                   |
 
 **Build vs Package:**
 - `./scripts/build.sh` — Debug build for development (fast compilation, debug symbols)
@@ -132,14 +132,21 @@ Docker-related scripts live under `scripts/docker/`:
 
 ## Code quality
 
-Install hooks once:
+### Pre-push Hooks
+
+Install hooks once (runs on `git push`, not commit):
 
 ```bash
-pip install --break-system-packages pre-commit
-pre-commit install
+pre-commit install --hook-type pre-push
 ```
 
-On each commit clang-format rewrites staged files and clang-tidy analyses them.
+Before each push, pre-commit will:
+- Run `clang-format` to check code formatting
+- Run `clang-tidy` to analyze code quality
+
+These checks ensure consistent code style across the team.
+
+**VS Code DevContainer users:** Hooks are installed automatically via `postCreateCommand`.
 
 ---
 
@@ -200,29 +207,33 @@ VS Code users can reopen the workspace in the container. The Dev Container uses 
 
 ## Continuous integration (GitHub Actions)
 
-```
-on: [push, pull_request]
+The CI pipeline runs on every push and pull request:
 
-job: build
+```yaml
+on: [push, pull_request]
 runs-on: ubuntu-24.04
+
 steps:
-  - uses: actions/checkout@v4
-  - run: sudo apt-get update && sudo apt-get install -y cmake clang-format clang-tidy g++ doxygen
-  - run: cmake -S . -B build -DENABLE_TESTS=ON
-  - run: cmake --build build -j$(nproc)
-  - run: ctest --test-dir build --output-on-failure
+  - Install dependencies (cmake, clang-format)
+  - Build project with CMake
+  - Run all unit tests with ctest
 ```
+
+See [.github/workflows/ci.yml](.github/workflows/ci.yml) for the complete configuration.
 
 ---
 
 ## Unit tests
 
-Enable tests by fetching GoogleTest:
+Unit tests are **enabled by default** using GoogleTest (fetched automatically via CMake FetchContent).
 
 ```bash
-cmake -S . -B build -DENABLE_TESTS=ON
+cmake -S . -B build
 cmake --build build
-ctest --test-dir build
+ctest --test-dir build --output-on-failure
 ```
 
-Disable with `-DENABLE_TESTS=OFF`. This is the default
+To disable tests:
+```bash
+cmake -S . -B build -DENABLE_UNIT_TESTS=OFF
+```
