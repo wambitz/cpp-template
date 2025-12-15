@@ -11,6 +11,7 @@ repos:
       
       - id: clang-tidy
         name: clang-tidy
+        description: "Requires build directory with compile_commands.json to exist. Please build the project before pushing."
         entry: ./scripts/lint.sh
         language: system
         stages: [pre-push]
