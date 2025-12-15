@@ -35,8 +35,8 @@
     }
   },
 
+  "postCreateCommand": "pre-commit install --hook-type pre-push",
   "postStartCommand": "bash",
-
   // Clean container name and setup
   "runArgs": [
     "--rm",

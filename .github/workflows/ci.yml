@@ -6,8 +6,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
-        run: sudo apt-get update && sudo apt-get install -y cmake clang-format
+        run: sudo apt-get update && sudo apt-get install -y cmake clang-format clang-tidy
+      - name: Format check
+        run: ./scripts/format.sh --check
       - name: Build
         run: mkdir -p build && cd build && cmake .. && make
+      - name: Lint check
+        run: ./scripts/lint.sh
       - name: Test
         run: cd build && ctest --output-on-failure

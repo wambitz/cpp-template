@@ -1,15 +1,19 @@
 repos:
-  - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v14.0.0
-    hooks:
-      - id: clang-format
-        args: ["--style=file"]
-        types: [c, c++]
-
   - repo: local
     hooks:
+      - id: clang-format
+        name: clang-format
+        entry: ./scripts/format.sh --check
+        language: system
+        stages: [pre-push]
+        pass_filenames: false
+        types: [c, c++]
+      
       - id: clang-tidy
         name: clang-tidy
-        entry: ./scripts/lint_precommit.sh
+        description: "Requires build directory with compile_commands.json to exist. Please build the project before pushing."
+        entry: ./scripts/lint.sh
         language: system
+        stages: [pre-push]
+        pass_filenames: false
         types: [c, c++]
