@@ -28,6 +28,7 @@ docker run --rm -it \
     --env "HOST_UID=$(id -u)" \
     --env "HOST_GID=$(id -g)" \
     --env "DISPLAY=${DISPLAY}" \
+    --env TERM=xterm-256color \
     --volume /tmp/.X11-unix:/tmp/.X11-unix \
     --volume "$PROJECT_ROOT:/workspaces/$PROJECT_NAME" \
     --gpus all \

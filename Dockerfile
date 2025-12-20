@@ -34,23 +34,41 @@ RUN apt-get update && apt-get install -y \
 
 # ------------------------------------------------------------------------------
 # Create 'ubuntu' user if it doesn't exist (for Ubuntu 22.04 compatibility)
+# 
+# Ubuntu 24.04 already includes this user; Ubuntu 22.04 does not.
+# UID/GID will be remapped at runtime by entrypoint.sh to match host.
+#
+# IMPORTANT: We hardcode 'ubuntu' to avoid UID conflicts:
+# - Ubuntu base images already have an 'ubuntu' user at UID 1000
+# - If we used a different username and tried to create it with UID 1000,
+#   the 'useradd' command would fail due to UID conflict
+# - Runtime remapping (via usermod) changes the numeric UID/GID, not the name
+# - File permissions use numeric UIDs, so the username is just a label
 # ------------------------------------------------------------------------------
 RUN if ! id -u ubuntu > /dev/null 2>&1; then \
         useradd -m -s /bin/bash -u 1000 ubuntu; \
     fi
 
 # ------------------------------------------------------------------------------
-# Configure the 'ubuntu' user (UID/GID will be remapped at runtime)
+# Configure sudo access for ubuntu user
 # ------------------------------------------------------------------------------
 RUN echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/ubuntu \
     && chmod 0440 /etc/sudoers.d/ubuntu
 
 # ------------------------------------------------------------------------------
-# Configure bash with colors for ubuntu user
+# Enable colored terminal prompts (OPTIONAL - forces colors unconditionally)
+#
+# Without TERM=xterm-256color (set in run.sh and devcontainer.json), TERM
+# defaults to "xterm" which lacks color support. Setting TERM=xterm-256color
+# enables Ubuntu's .bashrc auto-detection to recognize and use colors.
+#
+# Uncommenting the line below forces colors unconditionally, bypassing detection.
+# This ensures colors work even if TERM isn't properly set, or in non-interactive
+# contexts. Safe for modern environments like Ubuntu 22.04/24.04.
+#
+# Only downside: may show escape codes on very old terminals without color support.
 # ------------------------------------------------------------------------------
-RUN echo 'export PS1="\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ "' >> /home/ubuntu/.bashrc \
-    && echo 'alias ls="ls --color=auto"' >> /home/ubuntu/.bashrc \
-    && echo 'alias grep="grep --color=auto"' >> /home/ubuntu/.bashrc
+# RUN sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /home/ubuntu/.bashrc
 
 # -----------------------------------------------------------------------------
 # Install pre-commit for code quality checks
