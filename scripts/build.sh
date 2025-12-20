@@ -1,6 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-set -e  # Exit on error
+###############################################################################
+# Build the project using CMake
+#
+# Builds in Debug mode by default and installs to the install/ directory.
+#
+# Usage:
+#   ./scripts/build.sh
+###############################################################################
 
 # Set build directory
 BUILD_DIR="build"

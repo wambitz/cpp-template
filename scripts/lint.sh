@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 set -e
 
-# ------------------------------------------------------------------------------
-# Run clang-tidy over all C++ source files using the build compile_commands.json
-# ------------------------------------------------------------------------------
+###############################################################################
+# Run clang-tidy static analysis
+#
+# Runs clang-tidy over all C++ source files using compile_commands.json.
+#
+# Usage:
+#   ./scripts/lint.sh
+###############################################################################
 
 BUILD_DIR="build"
 TIDY_BIN=$(command -v clang-tidy || true)

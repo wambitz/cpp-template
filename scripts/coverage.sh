@@ -1,6 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-set -e  # Exit on error
+###############################################################################
+# Build and run code coverage analysis
+#
+# Builds with coverage enabled, runs tests, and generates HTML coverage report.
+#
+# Usage:
+#   ./scripts/coverage.sh
+###############################################################################
 
 # Set build directory
 BUILD_DIR="build"

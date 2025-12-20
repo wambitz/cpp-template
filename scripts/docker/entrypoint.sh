@@ -1,10 +1,22 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
+
+###############################################################################
+# Docker entrypoint script for UID/GID remapping
+#
+# Remaps the ubuntu user's UID/GID at runtime to match the host user.
+# This ensures proper file permissions for mounted volumes.
+#
+# Environment variables:
+#   HOST_UID - Host user ID to remap to (default: 1000)
+#   HOST_GID - Host group ID to remap to (default: 1000)
+###############################################################################
 
 # Get host UID/GID from environment (defaults to 1000 if not set)
 HOST_UID=${HOST_UID:-1000}
 HOST_GID=${HOST_GID:-1000}
 
+# Container user (hardcoded to 'ubuntu' to match Ubuntu base image convention)
 CONTAINER_USER=ubuntu
 
 echo "Remapping '$CONTAINER_USER' to UID=$HOST_UID, GID=$HOST_GID"

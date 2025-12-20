@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-# ------------------------------------------------------------------------------
-# Run the prebuilt cpp-dev Docker image interactively
-# Passes host UID/GID for runtime remapping (matches DevContainer behavior)
-# ------------------------------------------------------------------------------
+###############################################################################
+# Run the cpp-dev Docker image interactively
+#
+# Runs the prebuilt cpp-dev image with host UID/GID remapping.
+# Matches DevContainer behavior for consistent file permissions.
+#
+# Usage:
+#   ./scripts/docker/run.sh
+###############################################################################
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PROJECT_NAME="$(basename "$PROJECT_ROOT")"
