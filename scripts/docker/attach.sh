@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
 set -e
 
-# ------------------------------------------------------------------------------
-# Attach to the running cpp-dev container as 'ubuntu' (remapped UID/GID)
-# Fails if the container is not running (expected behavior).
-# ------------------------------------------------------------------------------
+###############################################################################
+# Attach to the running cpp-dev container
+#
+# Attaches to the running container as 'ubuntu' user (remapped UID/GID).
+# Fails if the container is not running.
+#
+# Usage:
+#   ./scripts/docker/attach.sh
+###############################################################################
 
 CONTAINER_NAME="cpp-dev-${USER}"
 

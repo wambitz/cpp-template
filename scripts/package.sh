@@ -1,6 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -e
 
-set -e  # Exit on error
+###############################################################################
+# Package the project for distribution
+#
+# Builds in Release mode and creates distributable packages.
+#
+# Usage:
+#   ./scripts/package.sh
+###############################################################################
 
 # Set build directory
 BUILD_DIR="build"

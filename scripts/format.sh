@@ -1,13 +1,15 @@
-#!/bin/bash
-
-# --------------------------------------------------------------------
-# Format all C++ source/header files in the project using clang-format
-# Usage:
-#   ./format.sh          - Format files in-place
-#   ./format.sh --check  - Check formatting without modifying files
-# --------------------------------------------------------------------
-
+#!/usr/bin/env bash
 set -e
+
+###############################################################################
+# Format all C++ source/header files using clang-format
+#
+# Formats all C++ files in the project according to .clang-format config.
+#
+# Usage:
+#   ./scripts/format.sh          - Format files in-place
+#   ./scripts/format.sh --check  - Check formatting without modifying files
+###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
