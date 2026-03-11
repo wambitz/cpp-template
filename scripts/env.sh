@@ -35,22 +35,33 @@ fi
 
 # ==============================================================================
 # Logging helpers
+#
+# - printf is used instead of echo -e for portable escape handling
+# - log_warn and log_error write to stderr so pipelines stay clean
 # ==============================================================================
-log_info()    { echo -e "${GREEN}[INFO]${RESET} $*"; }
-log_warn()    { echo -e "${YELLOW}[WARN]${RESET} $*"; }
-log_error()   { echo -e "${RED}[ERROR]${RESET} $*"; }
-log_step()    { echo -e "${CYAN}[STEP]${RESET} $*"; }
-log_docker()  { echo -e "${BLUE}[CONTAINER]${RESET} $*"; }
+log_info()   { printf '%b %s\n' "${GREEN}[INFO]${RESET}" "$*"; }
+log_warn()   { printf '%b %s\n' "${YELLOW}[WARN]${RESET}" "$*" >&2; }
+log_error()  { printf '%b %s\n' "${RED}[ERROR]${RESET}" "$*" >&2; }
+log_step()   { printf '%b %s\n' "${CYAN}[STEP]${RESET}" "$*"; }
+log_docker() { printf '%b %s\n' "${BLUE}[CONTAINER]${RESET}" "$*"; }
 
 # ==============================================================================
 # Project paths
 #
 # SCRIPT_DIR must be set by the calling script before sourcing env.sh.
 # ==============================================================================
-if [ -z "${SCRIPT_DIR:-}" ] || [ ! -d "$SCRIPT_DIR" ]; then
-    echo "[ERROR] SCRIPT_DIR is not set or does not exist. Set it before sourcing env.sh." >&2
+if [ -z "${SCRIPT_DIR:-}" ]; then
+    log_error "SCRIPT_DIR is not set. Please set SCRIPT_DIR before sourcing env.sh."
     return 1
 fi
 
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+if [ ! -d "$SCRIPT_DIR" ]; then
+    log_error "SCRIPT_DIR '$SCRIPT_DIR' does not exist or is not a directory."
+    return 1
+fi
+
+if ! PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"; then
+    log_error "Failed to determine PROJECT_ROOT from SCRIPT_DIR '$SCRIPT_DIR'."
+    return 1
+fi
 PROJECT_NAME="$(basename "$PROJECT_ROOT")"
