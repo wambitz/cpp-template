@@ -47,6 +47,11 @@ delegate_to_container() {
         return 0
     fi
 
+    # CI environments provide their own toolchain -- skip delegation
+    if [ "${CI:-}" = "true" ]; then
+        return 0
+    fi
+
     # Resolve the calling script path relative to project root (portable)
     local caller_script="${BASH_SOURCE[1]}"
     local script_absolute

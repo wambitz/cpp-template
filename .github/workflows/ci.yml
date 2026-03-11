@@ -5,6 +5,10 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      - name: Install deps
+        run: >
+          sudo apt-get update &&
+          sudo apt-get install -y cmake clang-format clang-tidy
       - name: Format check
         run: ./scripts/format.sh --check
       - name: Build
