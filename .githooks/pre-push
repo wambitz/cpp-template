@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -e
+
+###############################################################################
+# Git pre-push hook
+#
+# Runs formatting and linting checks before pushing. Delegates to the project
+# scripts, which auto-delegate to Docker when run outside the container.
+###############################################################################
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "=== Pre-push: checking formatting ==="
+"$REPO_ROOT/scripts/format.sh" --check
+
+echo "=== Pre-push: running clang-tidy ==="
+"$REPO_ROOT/scripts/lint.sh"
