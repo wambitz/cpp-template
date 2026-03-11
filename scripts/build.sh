@@ -5,24 +5,33 @@ set -e
 # Build the project using CMake
 #
 # Builds in Debug mode by default and installs to the install/ directory.
+# When run outside the container, delegates execution to Docker automatically.
 #
 # Usage:
 #   ./scripts/build.sh
 ###############################################################################
 
-# Set build directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
 BUILD_DIR="build"
 INSTALL_DIR="install"
 
-# Create and enter build directory
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Run CMake with Debug build type by default (for development)
+log_step "Configuring CMake (Debug)..."
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX="../$INSTALL_DIR" ..
 
-# Build all targets with all cores
+log_step "Building with $(nproc) cores..."
 make -j"$(nproc)"
 
-# Install to ../install
+log_step "Installing to ../$INSTALL_DIR"
 make install
+
+log_info "Build complete."

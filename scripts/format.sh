@@ -5,6 +5,7 @@ set -e
 # Format all C++ source/header files using clang-format
 #
 # Formats all C++ files in the project according to .clang-format config.
+# When run outside the container, delegates execution to Docker automatically.
 #
 # Usage:
 #   ./scripts/format.sh          - Format files in-place
@@ -12,15 +13,19 @@ set -e
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
 
-# Check if --check flag is passed
+# ---------------------------------------------------------------------------
+# Format
+# ---------------------------------------------------------------------------
 CHECK_MODE=false
 if [[ "$1" == "--check" ]]; then
     CHECK_MODE=true
-    echo "[INFO] Running clang-format in check mode (no modifications)..."
+    log_info "Running clang-format in check mode (no modifications)..."
 else
-    echo "[INFO] Running clang-format on source files..."
+    log_info "Running clang-format on source files..."
 fi
 
 EXTENSIONS=("*.cpp" "*.hpp" "*.cc" "*.h" "*.cxx" "*.hxx")
@@ -32,17 +37,17 @@ for ext in "${EXTENSIONS[@]}"; do
     for f in $FILES; do
         FOUND=true
         if $CHECK_MODE; then
-            echo "Checking $f"
+            log_step "Checking $f"
             clang-format --dry-run --Werror "$f"
         else
-            echo "Formatting $f"
+            log_step "Formatting $f"
             clang-format -i "$f"
         fi
     done
 done
 
 if ! $FOUND; then
-    echo "[INFO] No files found to format."
+    log_warn "No files found to format."
 else
-    echo "[INFO] clang-format complete."
+    log_info "clang-format complete."
 fi

@@ -5,44 +5,44 @@ set -e
 # Build and run code coverage analysis
 #
 # Builds with coverage enabled, runs tests, and generates HTML coverage report.
+# When run outside the container, delegates execution to Docker automatically.
 #
 # Usage:
 #   ./scripts/coverage.sh
 ###############################################################################
 
-# Set build directory
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
+
+# ---------------------------------------------------------------------------
+# Coverage
+# ---------------------------------------------------------------------------
 BUILD_DIR="build"
 INSTALL_DIR="install"
 
-echo "Building with code coverage enabled..."
-
-# Create and enter build directory
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Run CMake with coverage enabled
+log_step "Configuring CMake with coverage enabled..."
 cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX="../$INSTALL_DIR" ..
 
-# Build all targets with all cores
+log_step "Building with $(nproc) cores..."
 make -j"$(nproc)"
 
-# Run tests to generate coverage data
+log_step "Running tests..."
 make test
 
-# Generate coverage report with lcov
-echo "Generating coverage report..."
-export LC_ALL=C  # Fix locale warnings
+log_step "Generating coverage report..."
+export LC_ALL=C
 lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch
-lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors unused  # Remove system files
-lcov --remove coverage.info '*/build/*' --output-file coverage.info --ignore-errors unused  # Remove build files
-lcov --remove coverage.info '*/tests/*' --output-file coverage.info --ignore-errors unused  # Remove test files
-lcov --remove coverage.info '*/_deps/*' --output-file coverage.info --ignore-errors unused  # Remove external deps
+lcov --remove coverage.info '/usr/*' --output-file coverage.info --ignore-errors unused
+lcov --remove coverage.info '*/build/*' --output-file coverage.info --ignore-errors unused
+lcov --remove coverage.info '*/tests/*' --output-file coverage.info --ignore-errors unused
+lcov --remove coverage.info '*/_deps/*' --output-file coverage.info --ignore-errors unused
 
-# Generate HTML report
 genhtml coverage.info --output-directory coverage_report
 
-echo "Coverage report generated in build/coverage_report/"
-echo "Open build/coverage_report/index.html in your browser to view the report"
-
-# Optional: Install the project
-# make install
+log_info "Coverage report generated in build/coverage_report/"
+log_info "Open build/coverage_report/index.html in your browser to view the report."
