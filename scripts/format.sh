@@ -28,23 +28,20 @@ else
     log_info "Running clang-format on source files..."
 fi
 
-EXTENSIONS=("*.cpp" "*.hpp" "*.cc" "*.h" "*.cxx" "*.hxx")
 FOUND=false
 
-for ext in "${EXTENSIONS[@]}"; do
-    FILES=$(find "$PROJECT_ROOT/src" "$PROJECT_ROOT/tests" -type f -name "$ext" 2>/dev/null)
-
-    for f in $FILES; do
-        FOUND=true
-        if $CHECK_MODE; then
-            log_step "Checking $f"
-            clang-format --dry-run --Werror "$f"
-        else
-            log_step "Formatting $f"
-            clang-format -i "$f"
-        fi
-    done
-done
+while IFS= read -r -d '' f; do
+    FOUND=true
+    if $CHECK_MODE; then
+        log_step "Checking $f"
+        clang-format --dry-run --Werror "$f"
+    else
+        log_step "Formatting $f"
+        clang-format -i "$f"
+    fi
+done < <(find "$PROJECT_ROOT/src" "$PROJECT_ROOT/tests" -type f \
+    \( -name '*.cpp' -o -name '*.hpp' -o -name '*.cc' -o -name '*.h' -o -name '*.cxx' -o -name '*.hxx' \) \
+    -print0 2>/dev/null)
 
 if ! $FOUND; then
     log_warn "No files found to format."
