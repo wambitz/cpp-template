@@ -47,10 +47,16 @@ delegate_to_container() {
         return 0
     fi
 
-    # Resolve the calling script path relative to project root
+    # Resolve the calling script path relative to project root (portable)
     local caller_script="${BASH_SOURCE[1]}"
-    local script_relative
-    script_relative="$(realpath --relative-to="$PROJECT_ROOT" "$caller_script")"
+    local script_absolute
+    script_absolute="$(cd "$(dirname "$caller_script")" && pwd)/$(basename "$caller_script")"
+    local script_relative="${script_absolute#"$PROJECT_ROOT"/}"
+
+    if [ "$script_relative" = "$script_absolute" ]; then
+        log_error "Script '${caller_script}' is not under PROJECT_ROOT '${PROJECT_ROOT}'."
+        return 1
+    fi
 
     log_docker "Running outside container -- delegating to Docker..."
 

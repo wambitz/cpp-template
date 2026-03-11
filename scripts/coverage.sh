@@ -19,6 +19,8 @@ delegate_to_container "$@"
 # ---------------------------------------------------------------------------
 # Coverage
 # ---------------------------------------------------------------------------
+cd "$PROJECT_ROOT"
+
 BUILD_DIR="build"
 INSTALL_DIR="install"
 
@@ -26,7 +28,7 @@ mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 log_step "Configuring CMake with coverage enabled..."
-cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX="../$INSTALL_DIR" ..
+cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_COVERAGE=ON -DCMAKE_INSTALL_PREFIX="${PROJECT_ROOT}/$INSTALL_DIR" "$PROJECT_ROOT"
 
 log_step "Building with $(nproc) cores..."
 make -j"$(nproc)"

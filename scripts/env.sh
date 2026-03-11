@@ -47,5 +47,10 @@ log_docker()  { echo -e "${BLUE}[CONTAINER]${RESET} $*"; }
 #
 # SCRIPT_DIR must be set by the calling script before sourcing env.sh.
 # ==============================================================================
+if [ -z "${SCRIPT_DIR:-}" ] || [ ! -d "$SCRIPT_DIR" ]; then
+    echo "[ERROR] SCRIPT_DIR is not set or does not exist. Set it before sourcing env.sh." >&2
+    return 1
+fi
+
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 PROJECT_NAME="$(basename "$PROJECT_ROOT")"

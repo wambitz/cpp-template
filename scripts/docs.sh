@@ -19,11 +19,11 @@ delegate_to_container "$@"
 # ---------------------------------------------------------------------------
 # Documentation
 # ---------------------------------------------------------------------------
-DOCS_DIR="${PROJECT_ROOT}/docs"
+cd "$PROJECT_ROOT"
 
 log_info "Generating Doxygen documentation..."
 log_info "Doxygen version: $(doxygen --version)"
 
-doxygen "$DOCS_DIR/Doxyfile"
+doxygen docs/Doxyfile
 
 log_info "Documentation generation complete."
