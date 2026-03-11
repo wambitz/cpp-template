@@ -12,6 +12,13 @@
 #   source "$SCRIPT_DIR/env.sh"
 ###############################################################################
 
+# Guard: this file must be sourced, not executed directly
+if [ "${BASH_SOURCE[0]}" = "$0" ]; then
+    echo "[ERROR] env.sh must be sourced, not executed directly." >&2
+    echo "Usage: source \"$0\"" >&2
+    exit 1
+fi
+
 # ==============================================================================
 # Color definitions (disabled when output is not a terminal)
 # ==============================================================================
