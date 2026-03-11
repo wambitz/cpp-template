@@ -5,18 +5,25 @@ set -e
 # Generate Doxygen documentation
 #
 # Generates HTML documentation from source code comments.
+# When run outside the container, delegates execution to Docker automatically.
 #
 # Usage:
 #   ./scripts/docs.sh
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-DOCS_DIR="${PROJECT_ROOT}/docs"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
 
-echo "[INFO] Generating Doxygen documentation..."
-echo "[INFO] Doxygen version: $(doxygen --version)"
+# ---------------------------------------------------------------------------
+# Documentation
+# ---------------------------------------------------------------------------
+cd "$PROJECT_ROOT"
 
-# Run doxygen from project root
-doxygen "$DOCS_DIR/Doxyfile"
+log_info "Generating Doxygen documentation..."
+log_info "Doxygen version: $(doxygen --version)"
 
+doxygen docs/Doxyfile
+
+log_info "Documentation generation complete."

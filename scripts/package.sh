@@ -5,35 +5,40 @@ set -e
 # Package the project for distribution
 #
 # Builds in Release mode and creates distributable packages.
+# When run outside the container, delegates execution to Docker automatically.
 #
 # Usage:
 #   ./scripts/package.sh
 ###############################################################################
 
-# Set build directory
-BUILD_DIR="build"
-INSTALL_DIR="install"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
 
-echo "[INFO] Building project..."
+# ---------------------------------------------------------------------------
+# Package
+# ---------------------------------------------------------------------------
+cd "$PROJECT_ROOT"
 
-# Create and enter build directory
+BUILD_DIR="${PROJECT_ROOT}/build"
+INSTALL_DIR="${PROJECT_ROOT}/install"
+
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
-# Run CMake with Release build type by default (disable coverage for packaging)
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF -DCMAKE_INSTALL_PREFIX="../$INSTALL_DIR" ..
+log_step "Configuring CMake (Release)..."
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" "$PROJECT_ROOT"
 
-# Build all targets with all cores
+log_step "Building with $(nproc) cores..."
 make -j"$(nproc)"
 
-# Install to ../install
+log_step "Installing to $INSTALL_DIR"
 make install
 
-echo "[INFO] Creating packages..."
-
-# Create packages using CPack
+log_step "Creating packages with CPack..."
 cpack
 
-echo "[INFO] Build and packaging complete!"
-echo "[INFO] Packages created:"
-ls -la *.tar.gz *.zip *.deb 2>/dev/null || echo "No packages found"
+log_info "Build and packaging complete."
+log_info "Packages created:"
+ls -la *.tar.gz *.zip *.deb 2>/dev/null || log_warn "No packages found."
