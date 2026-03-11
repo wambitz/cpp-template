@@ -21,19 +21,19 @@ delegate_to_container "$@"
 # ---------------------------------------------------------------------------
 cd "$PROJECT_ROOT"
 
-BUILD_DIR="build"
-INSTALL_DIR="install"
+BUILD_DIR="${PROJECT_ROOT}/build"
+INSTALL_DIR="${PROJECT_ROOT}/install"
 
 mkdir -p "$BUILD_DIR"
 cd "$BUILD_DIR"
 
 log_step "Configuring CMake (Release)..."
-cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF -DCMAKE_INSTALL_PREFIX="${PROJECT_ROOT}/$INSTALL_DIR" "$PROJECT_ROOT"
+cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_COVERAGE=OFF -DCMAKE_INSTALL_PREFIX="$INSTALL_DIR" "$PROJECT_ROOT"
 
 log_step "Building with $(nproc) cores..."
 make -j"$(nproc)"
 
-log_step "Installing to ${PROJECT_ROOT}/$INSTALL_DIR"
+log_step "Installing to $INSTALL_DIR"
 make install
 
 log_step "Creating packages with CPack..."

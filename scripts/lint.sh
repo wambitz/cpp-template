@@ -21,17 +21,11 @@ delegate_to_container "$@"
 # ---------------------------------------------------------------------------
 cd "$PROJECT_ROOT"
 
-BUILD_DIR="build"
-TIDY_BIN=$(command -v clang-tidy || true)
-
-if [ -z "$TIDY_BIN" ]; then
-    log_error "clang-tidy not found. Install it first."
-    exit 1
-fi
+BUILD_DIR="${PROJECT_ROOT}/build"
 
 log_info "Running clang-tidy over source files..."
 
-find src/ tests/ -type f \( -name '*.cpp' -o -name '*.cxx' -o -name '*.cc' \) | while read -r file; do
+find "${PROJECT_ROOT}/src" "${PROJECT_ROOT}/tests" -type f \( -name '*.cpp' -o -name '*.cxx' -o -name '*.cc' \) | while read -r file; do
     log_step "$file"
     clang-tidy "$file" -p "$BUILD_DIR" || true
 done
