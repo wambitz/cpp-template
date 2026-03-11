@@ -58,6 +58,17 @@ delegate_to_container() {
         return 1
     fi
 
+    # Preflight: verify Docker is installed and the daemon is reachable
+    if ! command -v docker &> /dev/null; then
+        log_error "Docker is not installed. Please install Docker to use container delegation."
+        return 1
+    fi
+
+    if ! docker version &> /dev/null; then
+        log_error "Docker daemon is not reachable. Is the Docker service running?"
+        return 1
+    fi
+
     log_docker "Running outside container -- delegating to Docker..."
 
     # Build the image if it does not exist yet
