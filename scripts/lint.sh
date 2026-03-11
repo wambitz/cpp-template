@@ -25,9 +25,18 @@ BUILD_DIR="${PROJECT_ROOT}/build"
 
 log_info "Running clang-tidy over source files..."
 
-find "${PROJECT_ROOT}/src" "${PROJECT_ROOT}/tests" -type f \( -name '*.cpp' -o -name '*.cxx' -o -name '*.cc' \) | while read -r file; do
+LINT_FAILED=0
+
+while IFS= read -r file; do
     log_step "$file"
-    clang-tidy "$file" -p "$BUILD_DIR" || true
-done
+    if ! clang-tidy "$file" -p "$BUILD_DIR"; then
+        LINT_FAILED=1
+    fi
+done < <(find "${PROJECT_ROOT}/src" "${PROJECT_ROOT}/tests" -type f \( -name '*.cpp' -o -name '*.cxx' -o -name '*.cc' \))
+
+if [ "$LINT_FAILED" -ne 0 ]; then
+    log_error "clang-tidy found issues."
+    exit 1
+fi
 
 log_info "clang-tidy lint complete."
