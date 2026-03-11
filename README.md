@@ -6,8 +6,8 @@ A modern, production-ready template for C++ development.
 | --------------- | -------------------------------------- | ------ |
 | Build           | CMake ≥ 3.20                           | ✔      |
 | Unit tests      | GoogleTest (optional)                  | ✔      |
-| Formatting      | clang-format (pre-commit)              | ✔      |
-| Linting         | clang-tidy (pre-commit)                | ✔      |
+| Formatting      | clang-format (pre-push hook)           | ✔      |
+| Linting         | clang-tidy (pre-push hook)             | ✔      |
 | Docs            | Doxygen                                | ✔      |
 | Dev environment | Docker image, VS Code DevContainer     | ✔      |
 | CI              | GitHub Actions (Ubuntu 24.04)          | ✔      |
@@ -19,8 +19,8 @@ A modern, production-ready template for C++ development.
 ```bash
 git clone <your-fork> my_project && cd my_project
 
-# Install pre-commit hooks (for code quality checks on push)
-pre-commit install --hook-type pre-push
+# Install git hooks (optional — runs format + lint checks on push)
+./scripts/install-hooks.sh
 
 cmake -S . -B build                  # -DENABLE_UNIT_TESTS=OFF to skip tests
 cmake --build build -j$(nproc)
@@ -134,19 +134,17 @@ Docker-related scripts live under `scripts/docker/`:
 
 ### Pre-push Hooks
 
-Install hooks once (runs on `git push`, not commit):
+Git hooks live in `.githooks/` (version-controlled). Install once after cloning:
 
 ```bash
-pre-commit install --hook-type pre-push
+./scripts/install-hooks.sh
 ```
 
-Before each push, pre-commit will:
+This sets `core.hooksPath` to `.githooks/`, so git uses the project's hooks. Before each push, the hook will:
 - Run `clang-format` to check code formatting
 - Run `clang-tidy` to analyze code quality
 
-These checks ensure consistent code style across the team.
-
-**VS Code DevContainer users:** Hooks are installed automatically via `postCreateCommand`.
+These checks delegate to Docker automatically (same as running the scripts directly).
 
 ---
 
