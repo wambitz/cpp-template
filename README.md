@@ -1,15 +1,16 @@
 # C++ Project Template
 
-A modern, production-ready template for C++ development.
+A modern, production-ready template for C++ development. All build and quality scripts run inside Docker automatically — no local toolchain required.
 
 | Capability      | Tool / Setup                           | Status |
 | --------------- | -------------------------------------- | ------ |
-| Build           | CMake ≥ 3.20                           | ✔      |
-| Unit tests      | GoogleTest (optional)                  | ✔      |
-| Formatting      | clang-format (pre-commit)              | ✔      |
-| Linting         | clang-tidy (pre-commit)                | ✔      |
+| Build           | CMake >= 3.20, C++17                   | ✔      |
+| Unit tests      | GoogleTest v1.14.0 (FetchContent)      | ✔      |
+| Formatting      | clang-format (pre-push hook)           | ✔      |
+| Linting         | clang-tidy (pre-push hook)             | ✔      |
+| Coverage        | lcov / gcov                            | ✔      |
 | Docs            | Doxygen                                | ✔      |
-| Dev environment | Docker image, VS Code DevContainer     | ✔      |
+| Dev environment | Docker + VS Code DevContainer          | ✔      |
 | CI              | GitHub Actions (Ubuntu 24.04)          | ✔      |
 
 ---
@@ -19,14 +20,18 @@ A modern, production-ready template for C++ development.
 ```bash
 git clone <your-fork> my_project && cd my_project
 
-# Install pre-commit hooks (for code quality checks on push)
-pre-commit install --hook-type pre-push
+# Build the Docker image (one-time)
+./scripts/docker/build_image.sh
 
-cmake -S . -B build                  # -DENABLE_UNIT_TESTS=OFF to skip tests
-cmake --build build -j$(nproc)
-./build/bin/main_exec
-ctest --test-dir build --output-on-failure   # if tests enabled
+# Install git hooks (runs format + lint checks on push)
+./scripts/install-hooks.sh
+
+# Build, test, done — scripts auto-delegate to Docker
+./scripts/build.sh
+./scripts/test.sh
 ```
+
+Build and quality scripts auto-delegate to Docker when run from the host. You don't need CMake, clang-format, or any other tool installed locally — just Docker. See [docs/ci-container-delegation.md](docs/ci-container-delegation.md) for details.
 
 ---
 
@@ -34,43 +39,66 @@ ctest --test-dir build --output-on-failure   # if tests enabled
 
 ```
 .
-├── CMakeLists.txt           root build script
-├── src/                     production code
-│   ├── example_public_private/ PUBLIC vs PRIVATE visibility (see README)
-│   ├── example_interface/   INTERFACE library (header-only)
-│   ├── example_static/      static library example (.a)
-│   ├── example_shared/      shared library example (.so + RPATH)
-│   ├── example_plugin_loader/ runtime plugin loader (dlopen)
-│   ├── example_plugin_impl/ sample plugin implementation
-│   └── main/                console application
-├── tests/                   unit tests (GoogleTest)
-├── external/                third-party code (empty by default)
-├── scripts/                 helper scripts
-├── docs/                    documentation (Doxygen, guides)
-└── .devcontainer/           VS Code container files
+├── CMakeLists.txt              root build script
+├── Dockerfile                  dev container image
+├── src/                        production code
+│   ├── example_static/         static library (.a)
+│   ├── example_shared/         shared library (.so + RPATH)
+│   ├── example_interface/      header-only (INTERFACE) library
+│   ├── example_public_private/ PUBLIC vs PRIVATE visibility demo
+│   ├── example_plugin_loader/  runtime plugin loader (dlopen)
+│   ├── example_plugin_impl/    sample plugin implementation
+│   └── main/                   console application
+├── tests/                      unit tests (GoogleTest)
+├── scripts/                    build, test, format, lint, coverage, docs
+│   └── docker/                 container management (build, run, attach, exec)
+├── .githooks/                  git hooks (pre-push: format + lint)
+├── .devcontainer/              VS Code DevContainer config
+├── cmake/                      extra CMake modules
+├── docs/                       documentation and guides
+└── external/                   third-party code (empty by default)
 ```
 
 ### Documentation
 
-- **PUBLIC/PRIVATE visibility**: See [docs/public-private-guide.md](docs/public-private-guide.md)
-- **RPATH configuration**: See [docs/rpath-guide.md](docs/rpath-guide.md)
-- **DevContainer setup**: See [docs/devcontainer-guide.md](docs/devcontainer-guide.md)
+- **PUBLIC/PRIVATE visibility**: [docs/public-private-guide.md](docs/public-private-guide.md)
+- **RPATH configuration**: [docs/rpath-guide.md](docs/rpath-guide.md)
+- **DevContainer setup**: [docs/devcontainer-guide.md](docs/devcontainer-guide.md)
+- **CI and container delegation**: [docs/ci-container-delegation.md](docs/ci-container-delegation.md)
+- **Remote debugging**: [docs/remote-debugging.md](docs/remote-debugging.md)
+
+---
+
+## Scripts
+
+Build and quality scripts auto-delegate to Docker when run on the host. Inside the container or CI (`CI=true`), they run directly. `install-hooks.sh` runs directly on the host to configure git.
+
+### Build and Development
+
+| Script               | Purpose                                           |
+| -------------------- | ------------------------------------------------- |
+| `build.sh`           | Debug build with tests enabled                    |
+| `test.sh`            | Run all tests                                     |
+| `package.sh`         | Release build + CPack packaging                   |
+| `coverage.sh`        | Build with coverage, run tests, generate report   |
+| `format.sh`          | Apply clang-format (`--check` for CI mode)        |
+| `lint.sh`            | Run clang-tidy (build first for compile_commands)  |
+| `docs.sh`            | Generate Doxygen HTML documentation               |
+| `install-hooks.sh`   | Set `core.hooksPath` to `.githooks/`              |
+
+### Docker
+
+| Script                      | Purpose                                    |
+| --------------------------- | ------------------------------------------ |
+| `docker/build_image.sh`     | Build the `cpp-dev:latest` image           |
+| `docker/run.sh`             | Run the dev container with UID/GID remap   |
+| `docker/attach.sh`          | Attach to running container as `ubuntu`    |
 
 ---
 
 ## Build options
 
-### CMake
-
-```bash
-# Development build (Debug, with debug symbols)
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
-
-# Release build (optimized, for packaging)
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-```
-
-**Key flags**:
+The build scripts handle CMake configuration automatically. If you need to customize, these are the key CMake flags:
 
 | Flag                     | Effect                           |
 | ------------------------ | -------------------------------- |
@@ -78,162 +106,74 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 | `-DENABLE_COVERAGE=ON`   | Enable code coverage with gcov   |
 | `-DBUILD_SHARED_LIBS=ON` | Build libraries as shared        |
 
-### Library Dependencies and RPATH
+### RPATH
 
-This project uses **RPATH** (Runtime Path) for portable library discovery:
+Shared libraries and plugins use RPATH (`$ORIGIN/../lib`) for portable discovery — no `LD_LIBRARY_PATH` needed:
 
 ```
 your-package/
 ├── bin/
 │   └── main_exec                      ← RPATH: $ORIGIN/../lib
 └── lib/
-    ├── libexample_shared.so           ← Found automatically
-    └── libexample_plugin_impl.so      ← Found by dlopen()
+    ├── libexample_shared.so           ← found automatically
+    └── libexample_plugin_impl.so      ← found by dlopen()
 ```
 
-**Key Benefits:**
-- **Self-contained packages** - work anywhere without installation
-- **No environment setup** - no `LD_LIBRARY_PATH` needed
-- **Plugin discovery** - `dlopen()` finds plugins via RPATH
-- **Clean code** - no hardcoded paths
-
-**For detailed RPATH explanation, examples, and troubleshooting, see [docs/rpath-guide.md](docs/rpath-guide.md)**
-
----
-
-## Scripts
-
-### Build and Development
-
-| Script        | Purpose                                              |
-| ------------- | ---------------------------------------------------- |
-| `build.sh`    | Configure and compile (Debug mode)                   |
-| `package.sh`  | Build and create distributable packages (Release)    |
-| `coverage.sh` | Build with coverage, run tests, generate report      |
-| `format.sh`   | Run clang-format on sources (use --check for CI)     |
-| `lint.sh`     | Run clang-tidy using compile commands                |
-| `docs.sh`     | Generate HTML docs                                   |
-
-**Build vs Package:**
-- `./scripts/build.sh` — Debug build for development (fast compilation, debug symbols)
-- `./scripts/package.sh` — Release build + CPack packaging (optimized, distributable)
-
-### Docker
-
-Docker-related scripts live under `scripts/docker/`:
-
-| Script           | Purpose                                           |
-| ---------------- | ------------------------------------------------- |
-| `build_image.sh` | Build the `cpp-dev:latest` image                  |
-| `run.sh`         | Run the dev container with UID/GID remap          |
-| `attach.sh`      | Attach to running container as `ubuntu`           |
+See [docs/rpath-guide.md](docs/rpath-guide.md) for details.
 
 ---
 
 ## Code quality
 
-### Pre-push Hooks
+### Pre-push hooks
 
-Install hooks once (runs on `git push`, not commit):
-
-```bash
-pre-commit install --hook-type pre-push
-```
-
-Before each push, pre-commit will:
-- Run `clang-format` to check code formatting
-- Run `clang-tidy` to analyze code quality
-
-These checks ensure consistent code style across the team.
-
-**VS Code DevContainer users:** Hooks are installed automatically via `postCreateCommand`.
-
----
-
-## API Documentation (Doxygen)
-
-Generate HTML documentation from code comments:
+Git hooks live in `.githooks/` (version-controlled). Install once after cloning:
 
 ```bash
-./scripts/docs.sh
-xdg-open docs/html/index.html
+./scripts/install-hooks.sh
 ```
+
+Before each push, the hook runs format and lint checks — delegating to Docker automatically. Clang-tidy requires `compile_commands.json` from a prior build; if missing, the hook skips lint and warns (format still runs).
 
 ---
 
 ## Docker and DevContainer
 
-This project uses a **portable Docker image** with runtime UID/GID remapping. The same image works for all users without rebuilding.
-
-Build image
+Build the image (one-time):
 
 ```bash
 ./scripts/docker/build_image.sh
 ```
 
-Run interactive container
+Run an interactive container:
 
 ```bash
 ./scripts/docker/run.sh
 ```
 
-Attach to the running container
+Attach to a running container:
 
 ```bash
 ./scripts/docker/attach.sh
 ```
 
-This attaches as user `ubuntu` (with remapped UID/GID). If the container isn't running, the script will fail—start it first with `./scripts/docker/run.sh`.
-
-**Customize attach behavior:**
-
-To attach as root (for system administration):
-```bash
-docker exec -it -u root cpp-dev-${USER} bash
-```
-
-To attach with your host UID/GID directly:
-```bash
-docker exec -it -u "$(id -u):$(id -g)" cpp-dev-${USER} bash
-```
-
-**VS Code DevContainer:**
-
-VS Code users can reopen the workspace in the container. The Dev Container uses the prebuilt `cpp-dev:latest` image and relies on a runtime entrypoint to remap UID/GID (no extra `vsc-…-uid` image is created).
-
-**For detailed information about the DevContainer setup, see [docs/devcontainer-guide.md](docs/devcontainer-guide.md)**
+**VS Code DevContainer:** Reopen the workspace in the container via the Dev Containers extension. It uses the prebuilt `cpp-dev:latest` image with runtime UID/GID remapping. See [docs/devcontainer-guide.md](docs/devcontainer-guide.md).
 
 ---
 
 ## Continuous integration (GitHub Actions)
 
-The CI pipeline runs on every push and pull request:
+The CI pipeline runs on every push and pull request using the same project scripts:
 
 ```yaml
-on: [push, pull_request]
-runs-on: ubuntu-24.04
-
 steps:
-  - Install dependencies (cmake, clang-format)
-  - Build project with CMake
-  - Run all unit tests with ctest
+  - Install dependencies (cmake, clang-format, clang-tidy)
+  - Format check (./scripts/format.sh --check)
+  - Build (./scripts/build.sh)
+  - Lint check (./scripts/lint.sh)
+  - Test (./scripts/test.sh)
 ```
+
+GitHub Actions sets `CI=true`, so scripts skip Docker delegation and run directly on the runner. See [docs/ci-container-delegation.md](docs/ci-container-delegation.md) for a GHCR upgrade path.
 
 See [.github/workflows/ci.yml](.github/workflows/ci.yml) for the complete configuration.
-
----
-
-## Unit tests
-
-Unit tests are **enabled by default** using GoogleTest (fetched automatically via CMake FetchContent).
-
-```bash
-cmake -S . -B build
-cmake --build build
-ctest --test-dir build --output-on-failure
-```
-
-To disable tests:
-```bash
-cmake -S . -B build -DENABLE_UNIT_TESTS=OFF
-```

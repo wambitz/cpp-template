@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+set -e
+
+###############################################################################
+# Git pre-push hook
+#
+# Runs formatting and linting checks before pushing. Delegates to Docker
+# as a single container invocation (via the same mechanism as other scripts).
+###############################################################################
+
+# Drain stdin — git pipes ref info here; leaving it unconsumed can block.
+cat > /dev/null
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts" && pwd)"
+source "$SCRIPT_DIR/env.sh"
+source "$SCRIPT_DIR/docker/exec.sh"
+delegate_to_container "$@"
+
+log_info "Pre-push: checking formatting..."
+"$PROJECT_ROOT/scripts/format.sh" --check
+
+BUILD_DIR="$PROJECT_ROOT/build"
+if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
+    log_warn "Pre-push: skipping clang-tidy (no compile_commands.json)"
+    log_warn "Run ./scripts/build.sh first to enable lint checks."
+else
+    log_info "Pre-push: running clang-tidy..."
+    "$PROJECT_ROOT/scripts/lint.sh"
+fi
