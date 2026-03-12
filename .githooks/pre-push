@@ -13,5 +13,11 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 echo "=== Pre-push: checking formatting ==="
 "$REPO_ROOT/scripts/format.sh" --check
 
-echo "=== Pre-push: running clang-tidy ==="
-"$REPO_ROOT/scripts/lint.sh"
+BUILD_DIR="$REPO_ROOT/build"
+if [ ! -f "$BUILD_DIR/compile_commands.json" ]; then
+    echo "=== Pre-push: skipping clang-tidy (no compile_commands.json) ==="
+    echo "Run ./scripts/build.sh first to enable lint checks."
+else
+    echo "=== Pre-push: running clang-tidy ==="
+    "$REPO_ROOT/scripts/lint.sh"
+fi
