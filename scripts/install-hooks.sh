@@ -8,10 +8,12 @@ set -e
 # are used automatically. Run once after cloning:
 #
 #   ./scripts/install-hooks.sh
+#
+# This script runs directly on the host (no Docker delegation).
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+source "$SCRIPT_DIR/env.sh"
 
-git -C "$REPO_ROOT" config core.hooksPath .githooks
-echo "[INFO] Git hooks installed (.githooks/). core.hooksPath set."
+git -C "$PROJECT_ROOT" config core.hooksPath .githooks
+log_info "Git hooks installed (.githooks/). core.hooksPath set."

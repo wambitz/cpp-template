@@ -15,9 +15,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./scripts/docs.sh                                # Generate Doxygen documentation
 ```
 
-Git hooks live in `.githooks/` (version-controlled). Install once after cloning: `./scripts/install-hooks.sh`
+Git hooks live in `.githooks/` (version-controlled). Install once after cloning: `./scripts/install-hooks.sh` (runs directly on the host).
 
-All scripts auto-delegate to Docker when run outside the container (`docker run --rm`). The delegation logic lives in `scripts/docker/exec.sh`, sourced by each script via `scripts/env.sh`. Inside the container or CI (`CI=true`), scripts run directly with no overhead. See `docs/ci-container-delegation.md` for details on the CI strategy and a GHCR upgrade path.
+Build and quality scripts auto-delegate to Docker when run outside the container (`docker run --rm`). The delegation logic lives in `scripts/docker/exec.sh`, sourced by each script via `scripts/env.sh`. Inside the container or CI (`CI=true`), scripts run directly with no overhead. See `docs/ci-container-delegation.md` for details on the CI strategy and a GHCR upgrade path.
 
 ## Architecture
 

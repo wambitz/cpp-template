@@ -31,7 +31,7 @@ git clone <your-fork> my_project && cd my_project
 ./scripts/test.sh
 ```
 
-Every script in `scripts/` auto-delegates to Docker when run from the host. You don't need CMake, clang-format, or any other tool installed locally — just Docker. See [docs/ci-container-delegation.md](docs/ci-container-delegation.md) for details.
+Build and quality scripts auto-delegate to Docker when run from the host. You don't need CMake, clang-format, or any other tool installed locally — just Docker. See [docs/ci-container-delegation.md](docs/ci-container-delegation.md) for details.
 
 ---
 
@@ -71,7 +71,7 @@ Every script in `scripts/` auto-delegates to Docker when run from the host. You 
 
 ## Scripts
 
-All scripts auto-delegate to Docker when run on the host. Inside the container or CI (`CI=true`), they run directly.
+Build and quality scripts auto-delegate to Docker when run on the host. Inside the container or CI (`CI=true`), they run directly. `install-hooks.sh` runs directly on the host to configure git.
 
 ### Build and Development
 
