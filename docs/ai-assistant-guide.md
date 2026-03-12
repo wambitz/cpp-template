@@ -12,8 +12,13 @@ Think of these files as onboarding documentation for AI pair programmers.
 | File | Purpose |
 |------|---------|
 | `CLAUDE.md` | Project context: build commands, structure, conventions, anti-patterns |
+
+The following are **recommended additions** (not yet in the repo):
+
+| File | Purpose |
+|------|---------|
 | `.claude/settings.json` | Pre-approved commands and auto-format hook |
-| `.claude/commands/*.md` | Custom slash commands (`/build`, `/test`, `/check`, `/add-library`) |
+| `.claude/commands/*.md` | Custom slash commands (e.g., `/project:build`, `/project:test`) |
 
 ### GitHub Copilot
 
@@ -38,14 +43,14 @@ for that subtree (e.g., `tests/CLAUDE.md` could add test-specific instructions).
 Without this file, Claude asks permission every time it runs `cmake`, `ctest`,
 or `./scripts/build.sh`. The settings file pre-approves safe commands:
 
-```json
+```jsonc
 {
   "permissions": {
     "allow": [
       "Bash(./scripts/build.sh*)",
       "Bash(cmake *)",
-      "Bash(ctest *)",
-      ...
+      "Bash(ctest *)"
+      // ... additional commands
     ]
   }
 }
@@ -74,8 +79,9 @@ These are reusable workflows invoked with `/project:command-name`:
 | `/project:check` | Run full CI pipeline locally (format + build + lint + test) |
 | `/project:add-library <name>` | Scaffold a new library target with CMake, source, header, and tests |
 
-Commands accept arguments via `$ARGUMENTS`. They're markdown files that tell
-Claude what steps to follow — not shell scripts.
+Commands are invoked with the `/project:` prefix (e.g., `/project:build`).
+They accept arguments via `$ARGUMENTS` and are markdown files that tell Claude
+what steps to follow — not shell scripts.
 
 ### .github/copilot-instructions.md
 

@@ -32,4 +32,4 @@ This is a modern C++ project template using CMake >= 3.20 and C++17.
 - Use `#pragma once` for header guards
 - New libraries: create `src/<name>/CMakeLists.txt`, add via `add_subdirectory()` in root CMakeLists.txt
 - New tests: create `tests/test_<name>.cpp`, register in `tests/CMakeLists.txt` with `gtest_discover_tests()`
-- Plugin implementations must export `create_plugin()` as `extern "C"`
+- Plugin implementations must export `register_plugin()` as `extern "C"`

@@ -30,7 +30,7 @@ The template demonstrates four library patterns that build on each other:
 - **Interface library** (`example_interface`) — header-only, no compiled output; uses `INTERFACE` visibility so dependents get the include paths automatically
 - **Public/Private visibility** (`example_public_private`) — demonstrates how `PUBLIC` includes propagate to dependents while `PRIVATE` includes stay internal
 
-The **plugin system** (`example_plugin_loader` + `example_plugin_impl`) shows runtime loading via `dlopen()`. Plugins implement a C-compatible API defined in `plugin_api.hpp` and must export `create_plugin()` as `extern "C"`. The loader discovers plugin `.so` files via RPATH.
+The **plugin system** (`example_plugin_loader` + `example_plugin_impl`) shows runtime loading via `dlopen()`. Plugins implement a C-compatible API defined in `plugin_api.hpp` and must export `register_plugin()` as `extern "C"`. The loader discovers plugin `.so` files via RPATH.
 
 The main executable (`src/main/`) links against all libraries and demonstrates their usage together.
 
