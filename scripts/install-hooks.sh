@@ -9,7 +9,7 @@ set -e
 #
 #   ./scripts/install-hooks.sh
 #
-# This script runs directly on the host (no Docker delegation).
+# This script runs directly (no Docker delegation).
 ###############################################################################
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

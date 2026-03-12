@@ -8,6 +8,9 @@ set -e
 # as a single container invocation (via the same mechanism as other scripts).
 ###############################################################################
 
+# Drain stdin — git pipes ref info here; leaving it unconsumed can block.
+cat > /dev/null
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../scripts" && pwd)"
 source "$SCRIPT_DIR/env.sh"
 source "$SCRIPT_DIR/docker/exec.sh"
