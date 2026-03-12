@@ -59,7 +59,8 @@ or `./scripts/build.sh`. The settings file pre-approves safe commands:
 This eliminates repetitive permission prompts and makes Claude significantly
 faster to work with. Dangerous commands (`rm -rf /`, `sudo`) are explicitly denied.
 
-Personal overrides go in `.claude/settings.local.json` (gitignored).
+Personal overrides should go in `.claude/settings.local.json`; add this path
+to your `.gitignore` so local settings aren't committed.
 
 ### .claude/settings.json — Auto-Format Hook
 

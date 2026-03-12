@@ -17,11 +17,11 @@ This is a modern C++ project template using CMake >= 3.20 and C++17.
 - Tests go in `tests/test_<target_name>.cpp` using GoogleTest (GTest)
 - Use `target_include_directories` and `target_link_libraries` with correct CMake visibility keywords (PUBLIC, PRIVATE, INTERFACE)
 - Shared libraries use RPATH (`$ORIGIN/../lib`) for portable deployment
-- Plugins use a C-compatible API with `extern "C"` exported factory functions
+- Plugins use a C-compatible API with `extern "C"` exported entrypoints
 
 ## Build & Test
 
-- Build: `./scripts/build.sh` or `mkdir -p build && cd build && cmake .. && make`
+- Build: `./scripts/build.sh`
 - Test: `cd build && ctest --output-on-failure`
 - Format: `./scripts/format.sh`
 - Lint: `./scripts/lint.sh` (requires build first for compile_commands.json)
